@@ -9,34 +9,34 @@ import { getCurrentUser, logout } from './auth.js';
  * Inicializa los componentes comunes de la interfaz.
  */
 export function initUI() {
-    const user = getCurrentUser();
-    if (!user) return;
+  const user = getCurrentUser();
+  if (!user) return;
 
-    renderSidebar(user);
-    renderTopbar(user);
-    initOfflineDetection();
+  renderSidebar(user);
+  renderTopbar(user);
+  initOfflineDetection();
 }
 
 /**
  * Renderiza la barra lateral según el rol del usuario.
  */
 function renderSidebar(user) {
-    const sidebar = document.querySelector('.sidebar');
-    if (!sidebar) return;
+  const sidebar = document.querySelector('.sidebar');
+  if (!sidebar) return;
 
-    const currentPath = window.location.pathname;
+  const currentPath = window.location.pathname;
 
-    const navItems = [
-        { label: 'Dashboard', icon: '📊', path: 'dashboard.html', roles: ['Administrador', 'Coordinador de Proyecto', 'Técnico de Campo'] },
-        { label: 'Captura de Datos', icon: '📝', path: 'captura.html', roles: ['Administrador', 'Coordinador de Proyecto', 'Técnico de Campo'] },
-        { label: 'Validación', icon: '✅', path: 'validacion.html', roles: ['Administrador', 'Coordinador de Proyecto'], badge: 3 },
-        { label: 'Reportes', icon: '📈', path: 'reportes.html', roles: ['Administrador', 'Coordinador de Proyecto'] },
-        { label: 'Configuración', icon: '⚙️', path: 'admin.html', roles: ['Administrador'] }
-    ];
+  const navItems = [
+    { label: 'Dashboard', icon: '📊', path: 'dashboard.html', roles: ['Administrador', 'Coordinador de Proyecto', 'Técnico de Campo'] },
+    { label: 'Captura de Datos', icon: '📝', path: 'captura.html', roles: ['Administrador', 'Coordinador de Proyecto', 'Técnico de Campo'] },
+    { label: 'Validación', icon: '✅', path: 'validacion.html', roles: ['Administrador', 'Coordinador de Proyecto'], badge: 3 },
+    { label: 'Reportes', icon: '📈', path: 'reportes.html', roles: ['Administrador', 'Coordinador de Proyecto'] },
+    { label: 'Configuración', icon: '⚙️', path: 'admin.html', roles: ['Administrador'] }
+  ];
 
-    const filteredNav = navItems.filter(item => item.roles.includes(user.rol));
+  const filteredNav = navItems.filter(item => item.roles.includes(user.rol));
 
-    sidebar.innerHTML = `
+  sidebar.innerHTML = `
     <div class="sidebar-brand">
       <img src="assets/img/logo.png" alt="+PaZion" onerror="this.src='https://placehold.co/40x40/7B35C4/white?text=P'">
       <div class="sidebar-brand-text">
@@ -69,23 +69,23 @@ function renderSidebar(user) {
     </div>
   `;
 
-    document.getElementById('userCard')?.addEventListener('click', () => {
-        if (confirm('¿Deseas cerrar sesión?')) {
-            logout();
-        }
-    });
+  document.getElementById('userCard')?.addEventListener('click', () => {
+    if (confirm('¿Deseas cerrar sesión?')) {
+      logout();
+    }
+  });
 }
 
 /**
  * Renderiza la barra superior.
  */
 function renderTopbar(user) {
-    const topbar = document.querySelector('.topbar');
-    if (!topbar) return;
+  const topbar = document.querySelector('.topbar');
+  if (!topbar) return;
 
-    const pageTitle = document.title.split('|')[0].trim();
+  const pageTitle = document.title.split('|')[0].trim();
 
-    topbar.innerHTML = `
+  topbar.innerHTML = `
     <div class="topbar-title">${pageTitle}</div>
     <div class="topbar-actions">
       <div id="gpsStatus" class="flex items-center gap-sm">
@@ -104,46 +104,46 @@ function renderTopbar(user) {
  * Detecta cambios en la conexión a internet.
  */
 function initOfflineDetection() {
-    const banner = document.createElement('div');
-    banner.className = 'offline-banner';
-    banner.textContent = '⚠️ Modo Offline: Los datos se guardarán localmente y se sincronizarán al recuperar conexión.';
-    document.body.appendChild(banner);
+  const banner = document.createElement('div');
+  banner.className = 'offline-banner';
+  banner.textContent = '⚠️ Modo Offline: Los datos se guardarán localmente y se sincronizarán al recuperar conexión.';
+  document.body.appendChild(banner);
 
-    const updateStatus = () => {
-        if (navigator.onLine) {
-            banner.classList.remove('visible');
-        } else {
-            banner.classList.add('visible');
-        }
-    };
+  const updateStatus = () => {
+    if (navigator.onLine) {
+      banner.classList.remove('visible');
+    } else {
+      banner.classList.add('visible');
+    }
+  };
 
-    window.addEventListener('online', updateStatus);
-    window.addEventListener('offline', updateStatus);
-    updateStatus();
+  window.addEventListener('online', updateStatus);
+  window.addEventListener('offline', updateStatus);
+  updateStatus();
 }
 
 /**
  * Muestra una notificación tipo Toast.
  */
 export function showToast(message, type = 'info') {
-    let container = document.querySelector('.toast-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.className = 'toast-container';
-        document.body.appendChild(container);
-    }
+  let container = document.querySelector('.toast-container');
+  if (!container) {
+    container = document.createElement('div');
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
 
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
     <span class="toast-icon">${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</span>
     <span class="toast-message">${message}</span>
   `;
 
-    container.appendChild(toast);
+  container.appendChild(toast);
 
-    setTimeout(() => {
-        toast.remove();
-        if (container.childNodes.length === 0) container.remove();
-    }, 4000);
+  setTimeout(() => {
+    toast.remove();
+    if (container.childNodes.length === 0) container.remove();
+  }, 4000);
 }

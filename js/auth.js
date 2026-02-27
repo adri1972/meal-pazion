@@ -23,7 +23,7 @@ export async function login(correo, password) {
             correo: usuario.correo,
             loggedInAt: new Date().getTime()
         };
-        sessionStorage.setItem('pazion_session', JSON.stringify(sessionData));
+        localStorage.setItem('pazion_session', JSON.stringify(sessionData));
         return { success: true, user: sessionData };
     }
 
@@ -34,7 +34,7 @@ export async function login(correo, password) {
  * Obtiene el usuario actual de la sesión.
  */
 export function getCurrentUser() {
-    const session = sessionStorage.getItem('pazion_session');
+    const session = localStorage.getItem('pazion_session');
     return session ? JSON.parse(session) : null;
 }
 
@@ -42,7 +42,7 @@ export function getCurrentUser() {
  * Cierra la sesión.
  */
 export function logout() {
-    sessionStorage.removeItem('pazion_session');
+    localStorage.removeItem('pazion_session');
     window.location.href = 'index.html';
 }
 
