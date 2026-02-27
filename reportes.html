@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes | Sistema MEAL +PaZion</title>
+    <link rel="stylesheet" href="css/main.css">
+    <!-- jspdf and html2canvas for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="topbar"></header>
+
+            <div class="page-wrapper">
+                <div class="flex justify-between items-center" style="margin-bottom: var(--space-xl);">
+                    <div>
+                        <h1 class="text-gradient">Generación de Reportes</h1>
+                        <p class="text-secondary">Consolidado institucional de indicadores</p>
+                    </div>
+                    <button class="btn btn-primary" id="btnExportPDF">
+                        <span>📄 Exportar PDF Institucional</span>
+                    </button>
+                </div>
+
+                <!-- Filters -->
+                <div class="card" style="margin-bottom: var(--space-xl);">
+                    <div class="grid grid-3">
+                        <div class="form-group">
+                            <label class="form-label">Rango de Fechas</label>
+                            <select id="filterDate" class="form-control">
+                                <option value="all">Siempre</option>
+                                <option value="month">Este Mes</option>
+                                <option value="quarter">Este Trimestre</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Eje Estratégico</label>
+                            <select id="filterEje" class="form-control">
+                                <option value="all">Todos los Ejes</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Estado de Validación</label>
+                            <select id="filterStatus" class="form-control">
+                                <option value="all">Todos</option>
+                                <option value="Aprobado">Solo Aprobados</option>
+                                <option value="Pendiente">Pendientes</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Content Area (for PDF export) -->
+                <div id="reportContent" class="card" style="padding: var(--space-2xl);">
+                    <div class="text-center" style="margin-bottom: var(--space-2xl);">
+                        <img src="assets/img/logo.png" alt="+PaZion"
+                            style="height: 60px; margin: 0 auto var(--space-md); filter: grayscale(1) brightness(2);"
+                            onerror="this.src='https://placehold.co/150x60/0D0718/7B35C4?text=+PaZion'">
+                        <h2 style="font-size: 24px; color: var(--text-primary);">Reporte Consolidado MEAL</h2>
+                        <p class="text-muted">Fundación +PaZion / Goles de Vida</p>
+                        <div id="reportMeta" class="text-sm" style="margin-top: var(--space-sm);">Generado el: <span
+                                id="genDate"></span></div>
+                    </div>
+
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Eje</th>
+                                    <th>Indicador</th>
+                                    <th>Meta (Año 1)</th>
+                                    <th>Logro Actual</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportTableBody">
+                                <!-- Se llena dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: var(--space-2xl);">
+                        <h3 style="margin-bottom: var(--space-md);">Resumen de Impacto</h3>
+                        <div class="grid grid-3">
+                            <div
+                                style="background: rgba(123,53,196,0.05); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border);">
+                                <div class="text-xs uppercase fw-bold text-muted">Total Registros</div>
+                                <div id="totalReg" class="stat-value" style="font-size: 24px;">0</div>
+                            </div>
+                            <div
+                                style="background: rgba(46,158,122,0.05); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border);">
+                                <div class="text-xs uppercase fw-bold text-muted">Aprobados</div>
+                                <div id="totalApp" class="stat-value" style="font-size: 24px; color: var(--green-400);">
+                                    0</div>
+                            </div>
+                            <div
+                                style="background: rgba(239,68,68,0.05); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border);">
+                                <div class="text-xs uppercase fw-bold text-muted">Avance Promedio</div>
+                                <div id="avgProgress" class="stat-value"
+                                    style="font-size: 24px; color: var(--purple-400);">0%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div
+                        style="margin-top: var(--space-3xl); border-top: 1px solid var(--border); padding-top: var(--space-md);">
+                        <p class="text-xs text-muted text-center">Nuestro sistema MEAL no solo mide números; mide la
+                            transformación de la subjetividad política de las niñas en el Cauca y el Valle.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initUI, showToast } from './js/app.js';
+        import { initDB, getAllData } from './js/db.js';
+
+        initUI();
+
+        let allCaptures = [];
+        let indicadores = [];
+
+        async function initReport() {
+            await initDB();
+            allCaptures = await getAllData('capturas');
+            indicadores = await getAllData('indicadores');
+
+            // Llenar filtro de ejes
+            const ejes = [...new Set(indicadores.map(i => i.eje))];
+            const ejeFilter = document.getElementById('filterEje');
+            ejes.forEach(eje => {
+                const opt = document.createElement('option');
+                opt.value = eje;
+                opt.textContent = eje;
+                ejeFilter.appendChild(opt);
+            });
+
+            document.getElementById('genDate').textContent = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const ejeVal = document.getElementById('filterEje').value;
+            const statusVal = document.getElementById('filterStatus').value;
+
+            let filteredInds = indicadores;
+            if (ejeVal !== 'all') filteredInds = indicadores.filter(i => i.eje === ejeVal);
+
+            const tbody = document.getElementById('reportTableBody');
+            let totalLogro = 0;
+            let approvedCount = 0;
+
+            tbody.innerHTML = filteredInds.map(ind => {
+                const caps = allCaptures.filter(c => c.indicador_id === ind.id);
+                const approved = caps.filter(c => c.estado === 'Aprobado');
+
+                // Simulación de cálculo de logro para la demo
+                const logro = approved.length > 0 ? (Math.random() * 20 + 70).toFixed(1) + '%' : '0%';
+                if (approved.length > 0) {
+                    totalLogro += parseFloat(logro);
+                    approvedCount++;
+                }
+
+                return `
+                    <tr>
+                        <td><span class="text-xs text-muted">${ind.eje}</span></td>
+                        <td><strong>${ind.nombre}</strong></td>
+                        <td class="text-sm">${ind.meta}</td>
+                        <td><span class="text-gradient fw-bold">${logro}</span></td>
+                        <td><span class="badge ${approved.length > 0 ? 'badge-success' : 'badge-warning'}">${approved.length > 0 ? 'Con Datos' : 'Sin Datos'}</span></td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Stats
+            document.getElementById('totalReg').textContent = allCaptures.length;
+            document.getElementById('totalApp').textContent = allCaptures.filter(c => c.estado === 'Aprobado').length;
+            document.getElementById('avgProgress').textContent = approvedCount > 0 ? (totalLogro / approvedCount).toFixed(1) + '%' : '0%';
+        }
+
+        // Eventos
+        document.getElementById('filterEje').addEventListener('change', applyFilters);
+        document.getElementById('filterStatus').addEventListener('change', applyFilters);
+
+        // Exportar PDF
+        document.getElementById('btnExportPDF').addEventListener('click', async () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'pt', 'a4');
+            const content = document.getElementById('reportContent');
+
+            showToast("Generando PDF institucional...", "info");
+
+            html2canvas(content, {
+                backgroundColor: '#0D0718',
+                scale: 2, // Mayor calidad
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 595.28; // A4 pt width
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                doc.save('Reporte_MEAL_Pazion_' + new Date().toISOString().split('T')[0] + '.pdf');
+                showToast("PDF descargado con éxito", "success");
+            });
+        });
+
+        initReport();
+    </script>
+</body>
+
+</html>

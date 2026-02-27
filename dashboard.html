@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Sistema MEAL +PaZion</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="topbar"></header>
+
+            <div class="page-wrapper">
+                <div class="flex justify-between items-center" style="margin-bottom: var(--space-xl);">
+                    <div>
+                        <h1 class="text-gradient">Resumen Global</h1>
+                        <p class="text-secondary">Estado de los indicadores de la Fundación +PaZion</p>
+                    </div>
+                    <div class="flex gap-sm">
+                        <button class="btn btn-secondary btn-sm" onclick="location.reload()">
+                            <span>🔄 Actualizar</span>
+                        </button>
+                        <button class="btn btn-primary" id="btnNuevaCaptura">
+                            <span>➕ Nueva Captura</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Global Stats Cards -->
+                <div class="grid grid-4" style="margin-bottom: var(--space-2xl);">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(123,53,196,0.1); color: var(--purple-400);">📈
+                        </div>
+                        <div class="stat-value">78%</div>
+                        <div class="stat-label">Avance Meta Global</div>
+                        <div class="stat-change positive">▲ 12% este mes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(46,158,122,0.1); color: var(--green-400);">👥
+                        </div>
+                        <div class="stat-value">1,240</div>
+                        <div class="stat-label">Principales Beneficiarios</div>
+                        <div class="stat-change positive">▲ 5% vs año ant.</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(245,158,11,0.1); color: var(--warning);">📍</div>
+                        <div class="stat-value">15</div>
+                        <div class="stat-label">Comunidades Impactadas</div>
+                        <div class="stat-change">Cauca y Valle del Cauca</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background: rgba(59,130,246,0.1); color: var(--info);">📡</div>
+                        <div class="stat-value">42</div>
+                        <div class="stat-label">Registros Pendientes Sync</div>
+                        <div class="stat-change neutral">Listo para sincronizar</div>
+                    </div>
+                </div>
+
+                <!-- Projects Progress -->
+                <h2 style="margin-bottom: var(--space-lg);">Progreso por Eje Estratégico</h2>
+                <div class="grid grid-3" id="proyectosGrid">
+                    <!-- Skeleton loading -->
+                    <div class="card skeleton" style="height: 200px;"></div>
+                    <div class="card skeleton" style="height: 200px;"></div>
+                    <div class="card skeleton" style="height: 200px;"></div>
+                </div>
+
+                <div class="divider"></div>
+
+                <div class="grid grid-2">
+                    <!-- Recent Captures -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Últimas Capturas en Campo</h3>
+                            <a href="validacion.html" class="text-sm text-gradient fw-600">Ver todo</a>
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Indicador</th>
+                                        <th>Fecha</th>
+                                        <th>Valor</th>
+                                        <th>Estado</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentCaptures">
+                                    <tr>
+                                        <td colspan="4" class="text-center">Cargando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Alerts/Tasks -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Alertas de Monitoreo</h3>
+                        </div>
+                        <div class="flex flex-col gap-md">
+                            <div class="alert alert-warning" style="margin-bottom: 0;">
+                                <strong>Bajo desempeño:</strong> El indicador "Tasa de Retención" está un 15% por debajo
+                                de la meta en la región Norte.
+                            </div>
+                            <div class="alert alert-info" style="margin-bottom: 0;">
+                                <strong>Recordatorio:</strong> Cierre de reporte trimestral en 5 días. Asegure la
+                                sincronización de todos los dispositivos.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initUI } from './js/app.js';
+        import { initDB, getAllData } from './js/db.js';
+
+        // Inicializar UI y Auth
+        initUI();
+
+        async function loadDashboardData() {
+            await initDB();
+            const indicadores = await getAllData('indicadores');
+            const grid = document.getElementById('proyectosGrid');
+
+            // Agrupar indicadores por eje
+            const ejes = {};
+            indicadores.forEach(ind => {
+                if (!ejes[ind.eje]) ejes[ind.eje] = [];
+                ejes[ind.eje].push(ind);
+            });
+
+            grid.innerHTML = Object.entries(ejes).map(([eje, inds]) => `
+                <div class="card">
+                    <div class="card-header">
+                        <span class="badge badge-purple">${eje}</span>
+                    </div>
+                    <h3 style="margin-bottom: var(--space-md);">${eje}</h3>
+                    <div class="progress-container">
+                        <div class="progress-header">
+                            <span class="progress-label">Avance Eje</span>
+                            <span class="progress-value">${Math.floor(Math.random() * 40 + 50)}%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" style="width: ${Math.floor(Math.random() * 40 + 50)}%"></div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-muted" style="margin-top: var(--space-md);">
+                        ${inds.length} indicadores activos en este eje estratégicos.
+                    </p>
+                    <button class="btn btn-ghost btn-sm btn-full" style="margin-top: var(--space-md);" onclick="location.href='captura.html?eje=${encodeURIComponent(eje)}'">
+                        Ver Indicadores
+                    </button>
+                </div>
+            `).join('');
+
+            // Cargar capturas recientes ficticias para demo
+            const recentBody = document.getElementById('recentCaptures');
+            recentBody.innerHTML = `
+                <tr>
+                    <td>Índice de Autoconfianza</td>
+                    <td>Hoy, 14:20</td>
+                    <td>8.5</td>
+                    <td><span class="badge badge-warning">Pendiente</span></td>
+                </tr>
+                <tr>
+                    <td>Percepción Espacio Seguro</td>
+                    <td>Ayer, 09:15</td>
+                    <td>95%</td>
+                    <td><span class="badge badge-success">Aprobado</span></td>
+                </tr>
+                <tr>
+                    <td>Tasa de Retención</td>
+                    <td>24 Feb, 16:40</td>
+                    <td>82%</td>
+                    <td><span class="badge badge-success">Aprobado</span></td>
+                </tr>
+            `;
+        }
+
+        loadDashboardData();
+
+        document.getElementById('btnNuevaCaptura')?.addEventListener('click', () => {
+            window.location.href = 'captura.html';
+        });
+    </script>
+</body>
+
+</html>

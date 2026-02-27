@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Sistema MEAL +PaZion</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body class="login-page">
+    <div class="modal-overlay" style="background: var(--bg-dark);">
+        <div class="modal modal-sm animate-fadein" style="box-shadow: var(--shadow-glow-purple);">
+            <div class="modal-body text-center" style="padding: var(--space-2xl);">
+                <img src="assets/img/logo.png" alt="+PaZion"
+                    style="height: 80px; margin: 0 auto var(--space-lg); filter: drop-shadow(0 0 12px rgba(123,53,196,0.6));"
+                    onerror="this.src='https://placehold.co/200x80/0D0718/7B35C4?text=+PaZion'">
+
+                <h2 style="margin-bottom: var(--space-xs);">Bienvenido</h2>
+                <p class="text-muted" style="margin-bottom: var(--space-xl);">Inicia sesión para acceder al Sistema MEAL
+                </p>
+
+                <form id="loginForm">
+                    <div class="form-group text-left">
+                        <label class="form-label" for="email">Correo Institucional</label>
+                        <input type="email" id="email" class="form-control" placeholder="ejemplo@pazion.org" required>
+                    </div>
+                    <div class="form-group text-left">
+                        <label class="form-label" for="password">Contraseña</label>
+                        <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+                    </div>
+
+                    <div id="loginError" class="alert alert-danger hidden" style="margin-bottom: var(--space-md);">
+                        Correo o contraseña incorrectos
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top: var(--space-md);">
+                        Entrar al Sistema
+                    </button>
+                </form>
+
+                <div class="divider-text">Goles de Vida</div>
+
+                <p class="text-sm text-muted">Asegúrese de estar conectado a internet durante el primer inicio de sesión
+                    para sincronizar roles.</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { login, checkAuth } from './js/auth.js';
+
+        // Redirigir si ya está logueado
+        checkAuth();
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registrado', reg))
+                    .catch(err => console.log('SW error', err));
+            });
+        }
+
+        const loginForm = document.getElementById('loginForm');
+        const loginError = document.getElementById('loginError');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const result = await login(email, password);
+
+            if (result.success) {
+                window.location.href = 'dashboard.html';
+            } else {
+                loginError.classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captura de Datos | Sistema MEAL +PaZion</title>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        .signature-canvas {
+            width: 100%;
+            height: 200px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            background: #1A0D36;
+            touch-action: none;
+        }
+
+        .photo-preview {
+            width: 100%;
+            height: 200px;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.02);
+            margin-top: var(--space-sm);
+        }
+
+        .photo-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="topbar"></header>
+
+            <div class="page-wrapper">
+                <div class="flex justify-between items-center" style="margin-bottom: var(--space-xl);">
+                    <div>
+                        <h1 class="text-gradient">Captura de Monitoreo</h1>
+                        <p class="text-secondary">Registro de indicadores en campo</p>
+                    </div>
+                    <div class="flex items-center gap-sm">
+                        <span class="text-sm fw-600">Paso <span id="currentStepNum">1</span> de 3</span>
+                    </div>
+                </div>
+
+                <!-- STEP 1: Selección de Indicador -->
+                <div id="step1" class="step active">
+                    <div class="card">
+                        <h2 style="margin-bottom: var(--space-lg);">Seleccione el Indicador</h2>
+                        <div class="form-group">
+                            <label class="form-label">Eje Estratégico</label>
+                            <select id="ejeSelector" class="form-control">
+                                <option value="">-- Seleccione un Eje --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Indicador</label>
+                            <select id="indicadorSelector" class="form-control" disabled>
+                                <option value="">-- Primero seleccione un Eje --</option>
+                            </select>
+                        </div>
+                        <div id="indMeta" class="alert alert-info hidden">
+                            <strong>Meta Meta Anual:</strong> <span id="metaText"></span>
+                        </div>
+                        <div class="flex justify-end" style="margin-top: var(--space-xl);">
+                            <button id="btnToStep2" class="btn btn-primary" disabled>Continuar a Instrucciones</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 2: Capacitación / Instrucciones -->
+                <div id="step2" class="step">
+                    <div class="card">
+                        <h2 style="margin-bottom: var(--space-lg);">Módulo de Capacitación</h2>
+                        <div class="flex flex-col gap-lg">
+                            <div>
+                                <h3 id="instTitle" class="text-gradient">Guía para el registro</h3>
+                                <p id="instDef" class="text-secondary" style="margin-top: var(--space-sm);"></p>
+                            </div>
+
+                            <div class="grid grid-2">
+                                <div style="text-align: center;">
+                                    <div
+                                        style="margin-bottom: var(--space-sm); color: var(--success); font-weight: 700;">
+                                        ✅ Correcto (Referencia)</div>
+                                    <img src="https://placehold.co/400x250/064E3B/D1FAF0?text=Evidencia+Correcta"
+                                        alt="Correcto"
+                                        style="border-radius: var(--radius-md); border: 2px solid var(--success);">
+                                </div>
+                                <div style="text-align: center;">
+                                    <div
+                                        style="margin-bottom: var(--space-sm); color: var(--danger); font-weight: 700;">
+                                        ❌ Incorrecto</div>
+                                    <img src="https://placehold.co/400x250/450A0A/FECACA?text=Evidencia+Incorrecta"
+                                        alt="Incorrecto"
+                                        style="border-radius: var(--radius-md); border: 2px solid var(--danger);">
+                                </div>
+                            </div>
+
+                            <div class="alert alert-warning">
+                                <div class="form-check">
+                                    <input type="checkbox" id="checkRead">
+                                    <label for="checkRead"><strong>Confirmo que he leído y comprendido las instrucciones
+                                            de captura para este indicador.</strong></label>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between" style="margin-top: var(--space-md);">
+                                <button onclick="goToStep(1)" class="btn btn-ghost">Atrás</button>
+                                <button id="btnToStep3" class="btn btn-primary" disabled>Iniciar Captura</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STEP 3: Formulario de Registro -->
+                <div id="step3" class="step">
+                    <form id="captureForm">
+                        <div class="grid grid-2">
+                            <div class="card">
+                                <h3 style="margin-bottom: var(--space-lg);">Datos del Registro</h3>
+                                <div class="form-group">
+                                    <label class="form-label">Valor del Indicador <small>(Número o Texto según
+                                            definición)</small></label>
+                                    <input type="text" id="valorInput" class="form-control"
+                                        placeholder="Ingrese el resultado..." required>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Observaciones / Comentarios</label>
+                                    <textarea id="obsInput" class="form-control"
+                                        placeholder="Detalles adicionales del levantamiento..."></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Geolocalización (GPS)</label>
+                                    <div class="flex items-center gap-md">
+                                        <div id="gpsCoords" class="text-sm text-muted">Aún no capturado</div>
+                                        <button type="button" id="btnGetGPS" class="btn btn-secondary btn-sm">📍
+                                            Capturar Ubicación</button>
+                                    </div>
+                                    <div id="gpsStatusText" class="text-xs" style="margin-top: 5px;"></div>
+                                </div>
+                            </div>
+
+                            <div class="card">
+                                <h3 style="margin-bottom: var(--space-lg);">Evidencia y Firma</h3>
+                                <div class="form-group">
+                                    <label class="form-label">Evidencia Fotográfica</label>
+                                    <input type="file" id="photoInput" accept="image/*" class="hidden">
+                                    <button type="button" onclick="document.getElementById('photoInput').click()"
+                                        class="btn btn-ghost btn-full">📷 Cargar Foto</button>
+                                    <div id="photoPreview" class="photo-preview">
+                                        <span class="text-muted">Sin imagen cargada</span>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Firma del Beneficiario/Técnico</label>
+                                    <canvas id="signatureCanvas" class="signature-canvas"></canvas>
+                                    <div class="flex justify-end" style="margin-top: 5px;">
+                                        <button type="button" id="btnClearSignature" class="btn btn-ghost btn-sm">Borrar
+                                            Firma</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between" style="margin-top: var(--space-xl);">
+                            <button type="button" onclick="goToStep(2)" class="btn btn-ghost">Atrás</button>
+                            <button type="submit" class="btn btn-primary btn-lg">💾 Finalizar y Guardar</button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initUI, showToast } from './js/app.js';
+        import { initDB, getAllData, addData } from './js/db.js';
+        import { SignaturePad } from './js/firma.js';
+        import { getCurrentUser } from './js/auth.js';
+
+        initUI();
+
+        let sigPad;
+        let indicadores = [];
+        let selectedInd = null;
+        let gpsData = null;
+
+        // Cargar indicadores
+        async function loadData() {
+            await initDB();
+            indicadores = await getAllData('indicadores');
+
+            const ejes = [...new Set(indicadores.map(i => i.eje))];
+            const ejeSel = document.getElementById('ejeSelector');
+            ejes.forEach(eje => {
+                const opt = document.createElement('option');
+                opt.value = eje;
+                opt.textContent = eje;
+                ejeSel.appendChild(opt);
+            });
+        }
+
+        loadData();
+
+        // Selectores Dinámicos
+        document.getElementById('ejeSelector').addEventListener('change', (e) => {
+            const indSel = document.getElementById('indicadorSelector');
+            const ejeValue = e.target.value;
+
+            indSel.innerHTML = '<option value="">-- Seleccione un Indicador --</option>';
+            if (ejeValue) {
+                const filtered = indicadores.filter(i => i.eje === ejeValue);
+                filtered.forEach(i => {
+                    const opt = document.createElement('option');
+                    opt.value = i.id;
+                    opt.textContent = i.nombre;
+                    indSel.appendChild(opt);
+                });
+                indSel.disabled = false;
+            } else {
+                indSel.disabled = true;
+            }
+            updateBtnStep2();
+        });
+
+        document.getElementById('indicadorSelector').addEventListener('change', (e) => {
+            const id = parseInt(e.target.value);
+            selectedInd = indicadores.find(i => i.id === id);
+
+            if (selectedInd) {
+                document.getElementById('indMeta').classList.remove('hidden');
+                document.getElementById('metaText').textContent = selectedInd.meta;
+                document.getElementById('instTitle').textContent = `Guía: ${selectedInd.nombre}`;
+                document.getElementById('instDef').innerHTML = `<strong>Definición:</strong> Mide el progreso del indicador base según la meta institucional de ${selectedInd.meta}. Asegúrese de que la evidencia cumpla con los estándares de calidad MEAL.`;
+            } else {
+                document.getElementById('indMeta').classList.add('hidden');
+            }
+            updateBtnStep2();
+        });
+
+        function updateBtnStep2() {
+            document.getElementById('btnToStep2').disabled = !selectedInd;
+        }
+
+        // Navegación de Pasos
+        window.goToStep = (step) => {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+            document.getElementById('currentStepNum').textContent = step;
+
+            if (step === 3 && !sigPad) {
+                // Inicializar pad solo cuando se muestra el paso 3
+                setTimeout(() => {
+                    sigPad = new SignaturePad('signatureCanvas');
+                }, 100);
+            }
+        };
+
+        document.getElementById('btnToStep2').addEventListener('click', () => goToStep(2));
+
+        document.getElementById('checkRead').addEventListener('change', (e) => {
+            document.getElementById('btnToStep3').disabled = !e.target.checked;
+        });
+
+        document.getElementById('btnToStep3').addEventListener('click', () => goToStep(3));
+
+        // GPS
+        document.getElementById('btnGetGPS').addEventListener('click', () => {
+            const status = document.getElementById('gpsStatusText');
+            status.textContent = "Obteniendo ubicación...";
+
+            if (!navigator.geolocation) {
+                status.textContent = "GPS no institucional soportado en este navegador.";
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    gpsData = {
+                        lat: pos.coords.latitude,
+                        lng: pos.coords.longitude,
+                        acc: pos.coords.accuracy
+                    };
+                    document.getElementById('gpsCoords').textContent = `Lat: ${gpsData.lat.toFixed(6)}, Lng: ${gpsData.lng.toFixed(6)} (±${gpsData.acc.toFixed(1)}m)`;
+                    status.textContent = "✅ Ubicación capturada correctamente.";
+                    status.style.color = "var(--success)";
+                },
+                (err) => {
+                    status.textContent = "❌ Error: Permiso denegado o señal débil.";
+                    status.style.color = "var(--danger)";
+                }
+            );
+        });
+
+        // Foto Preview
+        document.getElementById('photoInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('photoPreview').innerHTML = `<img src="${e.target.result}">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('btnClearSignature').addEventListener('click', () => {
+            if (sigPad) sigPad.clear();
+        });
+
+        // Guardar Formulario
+        document.getElementById('captureForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = getCurrentUser();
+
+            if (!gpsData) {
+                alert("Por favor capture la ubicación GPS antes de continuar.");
+                return;
+            }
+
+            if (sigPad.isEmpty()) {
+                alert("La firma es obligatoria para validar el registro.");
+                return;
+            }
+
+            const registro = {
+                indicador_id: selectedInd.id,
+                usuario_id: user.id,
+                usuario_nombre: user.nombre,
+                valor: document.getElementById('valorInput').value,
+                observaciones: document.getElementById('obsInput').value,
+                fecha: new Date().toISOString(),
+                gps: gpsData,
+                firma: sigPad.getDataUrl(),
+                estado: 'Pendiente',
+                sync_status: navigator.onLine ? 'Synced' : 'Pending'
+            };
+
+            try {
+                await addData('capturas', registro);
+                showToast("Registro guardado exitosamente" + (!navigator.onLine ? " (Offline)" : ""), "success");
+                setTimeout(() => {
+                    window.location.href = 'dashboard.html';
+                }, 1500);
+            } catch (error) {
+                console.error(error);
+                showToast("Error al guardar el registro", "error");
+            }
+        });
+    </script>
+</body>
+
+</html>

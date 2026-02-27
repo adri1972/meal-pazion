@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Validación de Datos | Sistema MEAL +PaZion</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="topbar"></header>
+
+            <div class="page-wrapper">
+                <div class="flex justify-between items-center" style="margin-bottom: var(--space-xl);">
+                    <div>
+                        <h1 class="text-gradient">Bandeja de Validación</h1>
+                        <p class="text-secondary">Aprobación de registros levantados en campo</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Técnico</th>
+                                    <th>Indicador</th>
+                                    <th>Fecha</th>
+                                    <th>Valor</th>
+                                    <th>Ubicación</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="validationList">
+                                <tr>
+                                    <td colspan="6" class="text-center">Buscando registros pendientes...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Detalle -->
+    <div id="detailModal" class="modal-overlay hidden">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2 class="modal-title">Detalle del Registro</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Se llena dinámicamente -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="btnReject">Rechazar Registro</button>
+                <button class="btn btn-success" id="btnApprove">Aprobar y Consolidar</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initUI, showToast } from './js/app.js';
+        import { initDB, getAllData, updateData, getDataById } from './js/db.js';
+
+        initUI();
+
+        let currentRecord = null;
+        let records = [];
+
+        async function loadPending() {
+            await initDB();
+            const allCaptures = await getAllData('capturas');
+            records = allCaptures.filter(c => c.estado === 'Pendiente');
+
+            const tbody = document.getElementById('validationList');
+            if (records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 40px;">No hay registros pendientes de validación.</td></tr>';
+                return;
+            }
+
+            const indicadores = await getAllData('indicadores');
+
+            tbody.innerHTML = records.map(r => {
+                const ind = indicadores.find(i => i.id === r.indicador_id);
+                return `
+                    <tr>
+                        <td>${r.usuario_nombre}</td>
+                        <td>${ind ? ind.nombre : 'Desconocido'}</td>
+                        <td>${new Date(r.fecha).toLocaleString()}</td>
+                        <td><strong>${r.valor}</strong></td>
+                        <td><span class="text-sm">📍 ${r.gps.lat.toFixed(4)}, ${r.gps.lng.toFixed(4)}</span></td>
+                        <td>
+                            <button class="btn btn-secondary btn-sm" onclick="window.viewDetail(${r.id})">Revisar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        window.viewDetail = async (id) => {
+            currentRecord = records.find(r => r.id === id);
+            const modal = document.getElementById('detailModal');
+            const body = document.getElementById('modalBody');
+
+            const indicadores = await getAllData('indicadores');
+            const ind = indicadores.find(i => i.id === currentRecord.indicador_id);
+
+            body.innerHTML = `
+                <div class="grid grid-2">
+                    <div>
+                        <h4 class="text-muted text-sm uppercase fw-bold">Información General</h4>
+                        <div style="margin-top: var(--space-sm);">
+                            <p><strong>Indicador:</strong> ${ind ? ind.nombre : '-'}</p>
+                            <p><strong>Meta:</strong> ${ind ? ind.meta : '-'}</p>
+                            <p><strong>Levantado por:</strong> ${currentRecord.usuario_nombre}</p>
+                            <p><strong>Fecha:</strong> ${new Date(currentRecord.fecha).toLocaleString()}</p>
+                            <p><strong>Valor Reportado:</strong> <span class="badge badge-purple" style="font-size: 14px;">${currentRecord.valor}</span></p>
+                        </div>
+                        
+                        <h4 class="text-muted text-sm uppercase fw-bold" style="margin-top: var(--space-lg);">Observaciones</h4>
+                        <p class="text-secondary">${currentRecord.observaciones || 'Sin observaciones'}</p>
+                        
+                        <h4 class="text-muted text-sm uppercase fw-bold" style="margin-top: var(--space-lg);">Firma Digital</h4>
+                        <img src="${currentRecord.firma}" style="width: 200px; height: 100px; border: 1px solid var(--border); border-radius: var(--radius-md); background: white; margin-top: 5px;">
+                    </div>
+                    <div>
+                        <h4 class="text-muted text-sm uppercase fw-bold">Evidencia Fotográfica</h4>
+                        <img src="${currentRecord.foto_url || 'https://placehold.co/400x300/0D0718/7B35C4?text=Evidencia+Campo'}" style="width: 100%; border-radius: var(--radius-md); margin-top: 5px;">
+                        
+                        <h4 class="text-muted text-sm uppercase fw-bold" style="margin-top: var(--space-lg);">Ubicación GPS</h4>
+                        <div style="background: var(--bg-card); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border); margin-top: 5px;">
+                            <p class="text-sm"><strong>Coordenadas:</strong> ${currentRecord.gps.lat}, ${currentRecord.gps.lng}</p>
+                            <p class="text-sm"><strong>Precisión:</strong> ±${currentRecord.gps.acc.toFixed(1)} metros</p>
+                            <a href="https://www.google.com/maps?q=${currentRecord.gps.lat},${currentRecord.gps.lng}" target="_blank" class="text-sm text-gradient fw-600">Ver en Google Maps →</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: var(--space-xl);">
+                    <label class="form-label">Comentario de Revisión (Opcional)</label>
+                    <textarea id="valComment" class="form-control" placeholder="Escriba el motivo del rechazo o nota de aprobación..."></textarea>
+                </div>
+            `;
+
+            modal.classList.remove('hidden');
+        };
+
+        window.closeModal = () => {
+            document.getElementById('detailModal').classList.add('hidden');
+        };
+
+        document.getElementById('btnApprove').addEventListener('click', async () => {
+            if (!currentRecord) return;
+            const comment = document.getElementById('valComment').value;
+
+            currentRecord.estado = 'Aprobado';
+            currentRecord.comentario_validacion = comment;
+
+            await updateData('capturas', currentRecord);
+            showToast("Registro aprobado correctamente", "success");
+            closeModal();
+            loadPending();
+        });
+
+        document.getElementById('btnReject').addEventListener('click', async () => {
+            if (!currentRecord) return;
+            const comment = document.getElementById('valComment').value;
+            if (!comment) {
+                alert("Por favor indique el motivo del rechazo en los comentarios.");
+                return;
+            }
+
+            currentRecord.estado = 'Rechazado';
+            currentRecord.comentario_validacion = comment;
+
+            await updateData('capturas', currentRecord);
+            showToast("Registro rechazado", "warning");
+            closeModal();
+            loadPending();
+        });
+
+        loadPending();
+    </script>
+</body>
+
+</html>
