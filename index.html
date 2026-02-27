@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Sistema MEAL +PaZion</title>
-    <link rel="stylesheet" href="css/main.css?v=5">
+    <link rel="stylesheet" href="css/main.css?v=6">
 </head>
 
 <body class="login-page">
@@ -48,7 +48,7 @@
     </div>
 
     <script type="module">
-        import { login, checkAuth } from './js/auth.js?v=5';
+        import { login, checkAuth } from './js/auth.js?v=6';
 
         // Redirigir si ya está logueado
         checkAuth();
@@ -56,7 +56,7 @@
         // Register Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=5')
+                navigator.serviceWorker.register('./sw.js?v=6')
                     .then(reg => console.log('SW registrado', reg))
                     .catch(err => console.log('SW error', err));
             });

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Captura de Datos | Sistema MEAL +PaZion</title>
-    <link rel="stylesheet" href="css/main.css?v=5">
+    <link rel="stylesheet" href="css/main.css?v=6">
     <style>
         .step {
             display: none;
@@ -195,37 +195,35 @@
     </div>
 
     <script type="module">
-        import { initUI, showToast } from './js/app.js?v=5';
-        import { initDB, getAllData, addData, ensureDataSeeded, getIndicadoresMaestros } from './js/db.js?v=5';
-        import { SignaturePad } from './js/firma.js?v=5';
-        import { getCurrentUser } from './js/auth.js?v=5';
+        import { initUI, showToast } from './js/app.js?v=6';
+        import { initDB, addData, ensureDataSeeded } from './js/db.js?v=6';
+        import { SignaturePad } from './js/firma.js?v=6';
+        import { getCurrentUser } from './js/auth.js?v=6';
 
         initUI();
 
+        // ─── DATOS MAESTROS INCRUSTADOS (no dependen de IndexedDB) ────────────
+        // Esto garantiza que los ejes e indicadores SIEMPRE estén disponibles,
+        // independientemente del estado del Service Worker o IndexedDB.
+        const INDICADORES = [
+            { id: 1, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Índice de Autoconfianza', meta: '80% con aumento >3 puntos' },
+            { id: 2, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Agencia de Decisión', meta: '100% de las participantes' },
+            { id: 3, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Identificación de Derechos', meta: '90% de las participantes' },
+            { id: 4, eje: 'Construcción de Paz y Territorio', nombre: 'Percepción de Espacio Seguro', meta: '95% de percepción positiva' },
+            { id: 5, eje: 'Construcción de Paz y Territorio', nombre: 'Resolución de Conflictos', meta: 'Reducción del 50% en incidentes' },
+            { id: 6, eje: 'Construcción de Paz y Territorio', nombre: 'Vínculo Intercultural', meta: '1 encuentro bimensual' },
+            { id: 7, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Tasa de Retención', meta: '85% de retención anual' },
+            { id: 8, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Desempeño Competitivo', meta: 'Mínimo 2 torneos anuales' },
+            { id: 9, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Escalamiento Deportivo', meta: '2-3 jugadoras por ciclo' }
+        ];
+
         let sigPad;
-        let indicadores = [];
         let selectedInd = null;
         let gpsData = null;
 
-        // Cargar indicadores desde IndexedDB, con fallback a datos maestros
-        async function loadData() {
-            try {
-                await initDB();
-                await ensureDataSeeded();
-                indicadores = await getAllData('indicadores');
-                console.log(`loadData: ${indicadores.length} indicadores cargados desde BD.`);
-            } catch (err) {
-                console.error('Error al cargar BD, usando datos maestros:', err);
-                indicadores = [];
-            }
-
-            // Fallback: si la BD no devuelve datos, usar la lista maestra directamente
-            if (indicadores.length === 0) {
-                console.warn('BD vacía. Usando lista maestra de indicadores como fallback.');
-                indicadores = getIndicadoresMaestros();
-            }
-
-            const ejes = [...new Set(indicadores.map(i => i.eje))];
+        // ─── POBLAR EJES INMEDIATAMENTE (síncrono, sin async) ─────────────────
+        (function poblarEjes() {
+            const ejes = [...new Set(INDICADORES.map(i => i.eje))];
             const ejeSel = document.getElementById('ejeSelector');
             ejes.forEach(eje => {
                 const opt = document.createElement('option');
@@ -233,20 +231,21 @@
                 opt.textContent = eje;
                 ejeSel.appendChild(opt);
             });
+        })();
 
-            console.log(`Ejes cargados: ${ejes.join(', ')}`);
-        }
+        // Inicializar BD en background (solo para guardar capturas)
+        initDB().then(() => ensureDataSeeded()).catch(err =>
+            console.warn('BD no disponible, modo solo-formulario:', err)
+        );
 
-        loadData();
-
-        // Selectores Dinámicos
+        // ─── SELECTORES DINÁMICOS ──────────────────────────────────────────────
         document.getElementById('ejeSelector').addEventListener('change', (e) => {
             const indSel = document.getElementById('indicadorSelector');
             const ejeValue = e.target.value;
 
             indSel.innerHTML = '<option value="">-- Seleccione un Indicador --</option>';
             if (ejeValue) {
-                const filtered = indicadores.filter(i => i.eje === ejeValue);
+                const filtered = INDICADORES.filter(i => i.eje === ejeValue);
                 filtered.forEach(i => {
                     const opt = document.createElement('option');
                     opt.value = i.id;
@@ -257,12 +256,14 @@
             } else {
                 indSel.disabled = true;
             }
+            selectedInd = null;
+            document.getElementById('indMeta').classList.add('hidden');
             updateBtnStep2();
         });
 
         document.getElementById('indicadorSelector').addEventListener('change', (e) => {
             const id = parseInt(e.target.value);
-            selectedInd = indicadores.find(i => i.id === id);
+            selectedInd = INDICADORES.find(i => i.id === id) || null;
 
             if (selectedInd) {
                 document.getElementById('indMeta').classList.remove('hidden');
@@ -279,57 +280,47 @@
             document.getElementById('btnToStep2').disabled = !selectedInd;
         }
 
-        // Navegación de Pasos
+        // ─── NAVEGACIÓN DE PASOS ───────────────────────────────────────────────
         window.goToStep = (step) => {
             document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
             document.getElementById(`step${step}`).classList.add('active');
             document.getElementById('currentStepNum').textContent = step;
 
             if (step === 3 && !sigPad) {
-                // Inicializar pad solo cuando se muestra el paso 3
-                setTimeout(() => {
-                    sigPad = new SignaturePad('signatureCanvas');
-                }, 100);
+                setTimeout(() => { sigPad = new SignaturePad('signatureCanvas'); }, 100);
             }
         };
 
         document.getElementById('btnToStep2').addEventListener('click', () => goToStep(2));
-
         document.getElementById('checkRead').addEventListener('change', (e) => {
             document.getElementById('btnToStep3').disabled = !e.target.checked;
         });
-
         document.getElementById('btnToStep3').addEventListener('click', () => goToStep(3));
 
-        // GPS
+        // ─── GPS ───────────────────────────────────────────────────────────────
         document.getElementById('btnGetGPS').addEventListener('click', () => {
             const status = document.getElementById('gpsStatusText');
             status.textContent = "Obteniendo ubicación...";
-
             if (!navigator.geolocation) {
-                status.textContent = "GPS no institucional soportado en este navegador.";
+                status.textContent = "GPS no soportado en este navegador.";
                 return;
             }
-
             navigator.geolocation.getCurrentPosition(
                 (pos) => {
-                    gpsData = {
-                        lat: pos.coords.latitude,
-                        lng: pos.coords.longitude,
-                        acc: pos.coords.accuracy
-                    };
-                    document.getElementById('gpsCoords').textContent = `Lat: ${gpsData.lat.toFixed(6)}, Lng: ${gpsData.lng.toFixed(6)} (±${gpsData.acc.toFixed(1)}m)`;
+                    gpsData = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy };
+                    document.getElementById('gpsCoords').textContent =
+                        `Lat: ${gpsData.lat.toFixed(6)}, Lng: ${gpsData.lng.toFixed(6)} (±${gpsData.acc.toFixed(1)}m)`;
                     status.textContent = "✅ Ubicación capturada correctamente.";
                     status.style.color = "var(--success)";
                 },
-                (err) => {
+                () => {
                     status.textContent = "❌ Error: Permiso denegado o señal débil.";
                     status.style.color = "var(--danger)";
                 }
             );
         });
 
-        // Foto Preview
+        // ─── FOTO ──────────────────────────────────────────────────────────────
         document.getElementById('photoInput').addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
@@ -345,7 +336,7 @@
             if (sigPad) sigPad.clear();
         });
 
-        // Guardar Formulario
+        // ─── GUARDAR FORMULARIO ────────────────────────────────────────────────
         document.getElementById('captureForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const user = getCurrentUser();
@@ -354,7 +345,6 @@
                 alert("Por favor capture la ubicación GPS antes de continuar.");
                 return;
             }
-
             if (sigPad.isEmpty()) {
                 alert("La firma es obligatoria para validar el registro.");
                 return;
@@ -362,8 +352,10 @@
 
             const registro = {
                 indicador_id: selectedInd.id,
-                usuario_id: user.id,
-                usuario_nombre: user.nombre,
+                indicador_nombre: selectedInd.nombre,
+                eje: selectedInd.eje,
+                usuario_id: user?.id,
+                usuario_nombre: user?.nombre,
                 valor: document.getElementById('valorInput').value,
                 observaciones: document.getElementById('obsInput').value,
                 fecha: new Date().toISOString(),
@@ -376,9 +368,7 @@
             try {
                 await addData('capturas', registro);
                 showToast("Registro guardado exitosamente" + (!navigator.onLine ? " (Offline)" : ""), "success");
-                setTimeout(() => {
-                    window.location.href = 'dashboard.html';
-                }, 1500);
+                setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
             } catch (error) {
                 console.error(error);
                 showToast("Error al guardar el registro", "error");
