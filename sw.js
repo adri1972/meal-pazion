@@ -4,7 +4,7 @@
  * Permite el funcionamiento offline cacheando los assets esenciales.
  */
 
-const CACHE_NAME = 'pazion-meal-v1';
+const CACHE_NAME = 'pazion-meal-v2';
 const ASSETS = [
     './',
     './index.html',
@@ -42,11 +42,11 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Estrategia: Cache First, falling back to Network
+// Estrategia: Network First, falling back to Cache
 self.addEventListener('fetch', (event) => {
     event.respondWith(
-        caches.match(event.request).then((response) => {
-            return response || fetch(event.request);
+        fetch(event.request).catch(() => {
+            return caches.match(event.request);
         })
     );
 });
