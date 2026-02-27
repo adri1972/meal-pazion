@@ -196,7 +196,7 @@
 
     <script type="module">
         import { initUI, showToast } from './js/app.js?v=4';
-        import { initDB, getAllData, addData } from './js/db.js?v=4';
+        import { initDB, getAllData, addData, ensureDataSeeded } from './js/db.js?v=4';
         import { SignaturePad } from './js/firma.js?v=4';
         import { getCurrentUser } from './js/auth.js?v=4';
 
@@ -210,6 +210,7 @@
         // Cargar indicadores
         async function loadData() {
             await initDB();
+            await ensureDataSeeded(); // Garantiza que siempre haya datos
             indicadores = await getAllData('indicadores');
 
             const ejes = [...new Set(indicadores.map(i => i.eje))];

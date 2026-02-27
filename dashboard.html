@@ -121,13 +121,14 @@
 
     <script type="module">
         import { initUI } from './js/app.js?v=4';
-        import { initDB, getAllData } from './js/db.js?v=4';
+        import { initDB, getAllData, ensureDataSeeded } from './js/db.js?v=4';
 
         // Inicializar UI y Auth
         initUI();
 
         async function loadDashboardData() {
             await initDB();
+            await ensureDataSeeded(); // Garantiza que siempre haya datos
             const indicadores = await getAllData('indicadores');
             const grid = document.getElementById('proyectosGrid');
 
