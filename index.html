@@ -10,15 +10,20 @@
 
 <body class="login-page">
     <div class="modal-overlay" style="background: var(--bg-dark);">
-        <div class="modal modal-sm animate-fadein" style="box-shadow: var(--shadow-glow-purple);">
+        <div class="modal modal-sm animate-fadein"
+            style="background: var(--bg-card); box-shadow: var(--shadow-lg); border: 1px solid var(--border);">
             <div class="modal-body text-center" style="padding: var(--space-2xl);">
                 <img src="assets/img/logo.png" alt="+PaZion"
-                    style="height: 80px; margin: 0 auto var(--space-lg); filter: drop-shadow(0 0 12px rgba(123,53,196,0.6));"
+                    style="height: 140px; margin: 0 auto var(--space-md); filter: none;"
                     onerror="this.src='https://placehold.co/200x80/0D0718/7B35C4?text=+PaZion'">
 
-                <h2 style="margin-bottom: var(--space-xs);">Bienvenido</h2>
-                <p class="text-muted" style="margin-bottom: var(--space-xl);">Inicia sesión para acceder al Sistema MEAL
+                <h2 style="margin-bottom: var(--space-xs); font-size: 28px; line-height: 1.1;">Sistema MEAL</h2>
+                <p
+                    style="font-size: 14px; font-weight: 600; color: var(--text-secondary); margin-bottom: var(--space-xs);">
+                    Monitoreo, Evaluación y Aprendizaje
                 </p>
+                <p class="text-muted" style="margin-bottom: var(--space-xl); font-size: 14px;">Inicia sesión para
+                    acceder a tu área</p>
 
                 <form id="loginForm">
                     <div class="form-group text-left">
@@ -39,7 +44,8 @@
                     </button>
                 </form>
 
-                <div class="divider-text">Goles de Vida</div>
+                <div class="divider-text" style="color: var(--text-muted); margin: var(--space-xl) 0;">Goles de Vida
+                </div>
 
                 <p class="text-sm text-muted">Asegúrese de estar conectado a internet durante el primer inicio de sesión
                     para sincronizar roles.</p>
