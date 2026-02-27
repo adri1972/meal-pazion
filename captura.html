@@ -573,7 +573,7 @@
             const ind = selectedInd;
             document.getElementById('surveyTitle').textContent = ind.nombre;
             document.getElementById('surveyInstruccion').textContent = ind.instruccion;
-            document.getElementById('surveyBadge').textContent = ind.eje.split(' ')[0] + '...';
+            document.getElementById('surveyBadge').textContent = `Eje ${Math.ceil(ind.id / 3)}`;
 
             const container = document.getElementById('participantesContainer');
             container.innerHTML = '';
@@ -731,7 +731,7 @@
 
         window.selectBinary = (pIdx, valor) => {
             participantes[pIdx].respuesta = valor;
-            document.getElementById(`bin-si-${pIdx}`).className = `binary-option si${valor === true  ? ' selected' : ''}`;
+            document.getElementById(`bin-si-${pIdx}`).className = `binary-option si${valor === true ? ' selected' : ''}`;
             document.getElementById(`bin-no-${pIdx}`).className = `binary-option no${valor === false ? ' selected' : ''}`;
             actualizarResumenLive();
         };
@@ -931,20 +931,20 @@
             const foto = fotoEl ? fotoEl.src : null;
 
             const sesion = {
-                indicador_id:     selectedInd.id,
+                indicador_id: selectedInd.id,
                 indicador_nombre: selectedInd.nombre,
-                eje:              selectedInd.eje,
-                tipo:             selectedInd.tipo,
-                usuario_id:       user?.id,
-                usuario_nombre:   user?.nombre,
-                fecha:            new Date().toISOString(),
-                participantes:    selectedInd.tipo === 'escala' || selectedInd.tipo === 'binario' ? participantes : [],
-                conteo:           conteoData,
-                gps:              gpsData,
+                eje: selectedInd.eje,
+                tipo: selectedInd.tipo,
+                usuario_id: user?.id,
+                usuario_nombre: user?.nombre,
+                fecha: new Date().toISOString(),
+                participantes: selectedInd.tipo === 'escala' || selectedInd.tipo === 'binario' ? participantes : [],
+                conteo: conteoData,
+                gps: gpsData,
                 firma,
                 foto,
-                estado:           'Pendiente',
-                sync_status:      navigator.onLine ? 'Synced' : 'Pending',
+                estado: 'Pendiente',
+                sync_status: navigator.onLine ? 'Synced' : 'Pending',
             };
 
             try {
