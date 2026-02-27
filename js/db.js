@@ -5,7 +5,7 @@
  */
 
 const DB_NAME = 'PazionMEAL';
-const DB_VERSION = 2;
+const DB_VERSION = 4;
 
 let db;
 

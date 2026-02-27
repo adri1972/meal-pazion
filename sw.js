@@ -4,7 +4,7 @@
  * Permite el funcionamiento offline cacheando los assets esenciales.
  */
 
-const CACHE_NAME = 'pazion-meal-v2';
+const CACHE_NAME = 'pazion-meal-v5';
 const ASSETS = [
     './',
     './index.html',
@@ -21,8 +21,9 @@ const ASSETS = [
     './manifest.json'
 ];
 
-// Instalación: Cachear assets
+// Instalación: Cachear assets y forzar activación inmediata
 self.addEventListener('install', (event) => {
+    self.skipWaiting(); // ¡OBLIGA AL NUEVO SW A INSTALARSE INMEDIATAMENTE!
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             console.log('Cacheando assets institucionales...');
@@ -31,22 +32,37 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Activación: Limpiar caches antiguos
+// Activación: Limpiar caches antiguos y tomar control total
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keys) => {
             return Promise.all(
                 keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
             );
-        })
+        }).then(() => self.clients.claim()) // ¡TOMA EL CONTROL INMEDIATO DE LAS PESTAÑAS ABIERTAS!
     );
 });
 
-// Estrategia: Network First, falling back to Cache
+// Estrategia: Network First, actualizando el caché silenciosamente
 self.addEventListener('fetch', (event) => {
+    // Si la petición no es HTTP/HTTPS (por ejemplo chrome-extension://), dejarla pasar
+    if (!event.request.url.startsWith('http')) return;
+
     event.respondWith(
-        fetch(event.request).catch(() => {
-            return caches.match(event.request);
-        })
+        fetch(event.request)
+            .then((response) => {
+                // Si hay red y la respuesta es válida, actualizamos el caché
+                if (response && response.status === 200 && response.type === 'basic') {
+                    const responseClone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
+                        cache.put(event.request, responseClone);
+                    });
+                }
+                return response;
+            })
+            .catch(() => {
+                // Si no hay red, intentamos recuperar del caché
+                return caches.match(event.request);
+            })
     );
 });
