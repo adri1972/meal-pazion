@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Sistema MEAL +PaZion</title>
-    <link rel="stylesheet" href="css/main.css?v=7">
+    <link rel="stylesheet" href="css/main.css?v=8">
 </head>
 
 <body>
@@ -36,28 +36,28 @@
                     <div class="stat-card">
                         <div class="stat-icon" style="background: rgba(123,53,196,0.1); color: var(--purple-400);">📈
                         </div>
-                        <div class="stat-value">78%</div>
+                        <div class="stat-value" id="globalAvance">0%</div>
                         <div class="stat-label">Avance Meta Global</div>
-                        <div class="stat-change positive">▲ 12% este mes</div>
+                        <div class="stat-change text-muted" id="globalCambio">-</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon" style="background: rgba(46,158,122,0.1); color: var(--green-400);">👥
                         </div>
-                        <div class="stat-value">1,240</div>
+                        <div class="stat-value" id="totalParticipantes">0</div>
                         <div class="stat-label">Principales Beneficiarios</div>
-                        <div class="stat-change positive">▲ 5% vs año ant.</div>
+                        <div class="stat-change text-muted">-</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon" style="background: rgba(245,158,11,0.1); color: var(--warning);">📍</div>
-                        <div class="stat-value">15</div>
+                        <div class="stat-value" id="totalComunidades">0</div>
                         <div class="stat-label">Comunidades Impactadas</div>
-                        <div class="stat-change">Cauca y Valle del Cauca</div>
+                        <div class="stat-change text-muted">-</div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-icon" style="background: rgba(59,130,246,0.1); color: var(--info);">📡</div>
-                        <div class="stat-value">42</div>
+                        <div class="stat-value" id="pendientesSync">0</div>
                         <div class="stat-label">Registros Pendientes Sync</div>
-                        <div class="stat-change neutral">Listo para sincronizar</div>
+                        <div class="stat-change text-muted" id="syncStatus">Al día</div>
                     </div>
                 </div>
 
@@ -120,8 +120,8 @@
     </div>
 
     <script type="module">
-        import { initUI } from './js/app.js?v=7';
-        import { initDB, getAllData, ensureDataSeeded } from './js/db.js?v=7';
+        import { initUI } from './js/app.js?v=8';
+        import { initDB, getAllData, ensureDataSeeded } from './js/db.js?v=8';
 
         // Inicializar UI y Auth
         initUI();
@@ -148,10 +148,10 @@
                     <div class="progress-container">
                         <div class="progress-header">
                             <span class="progress-label">Avance Eje</span>
-                            <span class="progress-value">${Math.floor(Math.random() * 40 + 50)}%</span>
+                            <span class="progress-value">0%</span>
                         </div>
                         <div class="progress-track">
-                            <div class="progress-fill" style="width: ${Math.floor(Math.random() * 40 + 50)}%"></div>
+                            <div class="progress-fill" style="width: 0%"></div>
                         </div>
                     </div>
                     <p class="text-sm text-muted" style="margin-top: var(--space-md);">
@@ -167,22 +167,9 @@
             const recentBody = document.getElementById('recentCaptures');
             recentBody.innerHTML = `
                 <tr>
-                    <td>Índice de Autoconfianza</td>
-                    <td>Hoy, 14:20</td>
-                    <td>8.5</td>
-                    <td><span class="badge badge-warning">Pendiente</span></td>
-                </tr>
-                <tr>
-                    <td>Percepción Espacio Seguro</td>
-                    <td>Ayer, 09:15</td>
-                    <td>95%</td>
-                    <td><span class="badge badge-success">Aprobado</span></td>
-                </tr>
-                <tr>
-                    <td>Tasa de Retención</td>
-                    <td>24 Feb, 16:40</td>
-                    <td>82%</td>
-                    <td><span class="badge badge-success">Aprobado</span></td>
+                    <td colspan="4" class="text-center text-muted" style="padding: var(--space-xl) 0;">
+                        No hay capturas recientes. Los registros aparecerán aquí.
+                    </td>
                 </tr>
             `;
         }
