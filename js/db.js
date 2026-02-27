@@ -5,7 +5,7 @@
  */
 
 const DB_NAME = 'PazionMEAL';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 let db;
 
@@ -71,14 +71,14 @@ function seedInitialData(transaction) {
 
     // Usuarios iniciales
     const users = [
-        { correo: 'admin@pazion.org', nombre: 'Admin PaZion', password: '123', rol: 'Administrador' },
-        { correo: 'tecnico@pazion.org', nombre: 'Técnico Campo', password: '123', rol: 'Técnico de Campo' }
+        { id: 1, correo: 'admin@pazion.org', nombre: 'Admin PaZion', password: '123', rol: 'Administrador' },
+        { id: 2, correo: 'tecnico@pazion.org', nombre: 'Técnico Campo', password: '123', rol: 'Técnico de Campo' }
     ];
-    users.forEach(u => userStore.add(u));
+    users.forEach(u => userStore.put(u));
 
     // Proyecto inicial
     const proyectoId = 1;
-    projectStore.add({
+    projectStore.put({
         id: proyectoId,
         nombre: 'Goles de Vida',
         eje: 'Integral',
@@ -90,19 +90,19 @@ function seedInitialData(transaction) {
     // Indicadores reales
     const indicadores = [
         // Eje 1
-        { proyecto_id: proyectoId, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Índice de Autoconfianza', meta: '80% con aumento >3 puntos' },
-        { proyecto_id: proyectoId, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Agencia de Decisión', meta: '100% de las participantes' },
-        { proyecto_id: proyectoId, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Identificación de Derechos', meta: '90% de las participantes' },
+        { id: 1, proyecto_id: proyectoId, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Índice de Autoconfianza', meta: '80% con aumento >3 puntos' },
+        { id: 2, proyecto_id: proyectoId, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Agencia de Decisión', meta: '100% de las participantes' },
+        { id: 3, proyecto_id: proyectoId, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Identificación de Derechos', meta: '90% de las participantes' },
         // Eje 2
-        { proyecto_id: proyectoId, eje: 'Construcción de Paz y Territorio', nombre: 'Percepción de Espacio Seguro', meta: '95% de percepción positiva' },
-        { proyecto_id: proyectoId, eje: 'Construcción de Paz y Territorio', nombre: 'Resolución de Conflictos', meta: 'Reducción del 50% en incidentes' },
-        { proyecto_id: proyectoId, eje: 'Construcción de Paz y Territorio', nombre: 'Vínculo Intercultural', meta: '1 encuentro bimensual' },
+        { id: 4, proyecto_id: proyectoId, eje: 'Construcción de Paz y Territorio', nombre: 'Percepción de Espacio Seguro', meta: '95% de percepción positiva' },
+        { id: 5, proyecto_id: proyectoId, eje: 'Construcción de Paz y Territorio', nombre: 'Resolución de Conflictos', meta: 'Reducción del 50% en incidentes' },
+        { id: 6, proyecto_id: proyectoId, eje: 'Construcción de Paz y Territorio', nombre: 'Vínculo Intercultural', meta: '1 encuentro bimensual' },
         // Eje 3
-        { proyecto_id: proyectoId, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Tasa de Retención', meta: '85% de retención anual' },
-        { proyecto_id: proyectoId, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Desempeño Competitivo', meta: 'Mínimo 2 torneos anuales' },
-        { proyecto_id: proyectoId, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Escalamiento Deportivo', meta: '2-3 jugadoras por ciclo' }
+        { id: 7, proyecto_id: proyectoId, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Tasa de Retención', meta: '85% de retención anual' },
+        { id: 8, proyecto_id: proyectoId, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Desempeño Competitivo', meta: 'Mínimo 2 torneos anuales' },
+        { id: 9, proyecto_id: proyectoId, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Escalamiento Deportivo', meta: '2-3 jugadoras por ciclo' }
     ];
-    indicadores.forEach(i => indicatorStore.add(i));
+    indicadores.forEach(i => indicatorStore.put(i));
 }
 
 /**
