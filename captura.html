@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Captura de Datos | Sistema MEAL +PaZion</title>
-    <link rel="stylesheet" href="css/main.css?v=6">
+    <link rel="stylesheet" href="css/main.css?v=7">
     <style>
         .step {
             display: none;
@@ -13,6 +13,162 @@
 
         .step.active {
             display: block;
+        }
+
+        /* ── Slider de escala 1-10 ── */
+        .scale-input {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .scale-track {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .scale-track input[type=range] {
+            flex: 1;
+            accent-color: var(--purple-600);
+            cursor: pointer;
+            height: 6px;
+        }
+
+        .scale-value {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-md);
+            background: var(--grad-brand);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 16px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .scale-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: var(--text-muted);
+            padding: 0 2px;
+        }
+
+        /* ── Tabla de participantes ── */
+        .participant-row {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-sm);
+            position: relative;
+            animation: fadeInUp 0.2s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .participant-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--space-sm);
+        }
+
+        .participant-number {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--purple-400);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .btn-remove {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #FCA5A5;
+            border-radius: var(--radius-sm);
+            padding: 4px 10px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .btn-remove:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+
+        /* ── Resultado automático ── */
+        .resultado-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .resultado-pill.logrado {
+            background: rgba(34, 197, 94, 0.15);
+            color: #86EFAC;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .resultado-pill.no-logrado {
+            background: rgba(239, 68, 68, 0.12);
+            color: #FCA5A5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .resultado-pill.neutral {
+            background: rgba(245, 158, 11, 0.12);
+            color: #FDE68A;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        /* ── Resumen sesión ── */
+        .resumen-kpi {
+            text-align: center;
+            padding: var(--space-lg);
+            background: rgba(123, 53, 196, 0.1);
+            border: 1px solid var(--border-accent);
+            border-radius: var(--radius-xl);
+        }
+
+        .resumen-kpi .kpi-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 48px;
+            font-weight: 800;
+            background: var(--grad-brand);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .resumen-kpi .kpi-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+
+        .resumen-kpi .kpi-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
         }
 
         .signature-canvas {
@@ -26,7 +182,7 @@
 
         .photo-preview {
             width: 100%;
-            height: 200px;
+            height: 180px;
             border: 2px dashed var(--border);
             border-radius: var(--radius-md);
             display: flex;
@@ -42,31 +198,67 @@
             height: 100%;
             object-fit: cover;
         }
+
+        /* Binary (Si/No) */
+        .binary-toggle {
+            display: flex;
+            gap: var(--space-sm);
+        }
+
+        .binary-option {
+            flex: 1;
+            padding: 10px;
+            border-radius: var(--radius-md);
+            border: 2px solid var(--border);
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all var(--transition);
+            user-select: none;
+        }
+
+        .binary-option.si.selected {
+            border-color: var(--success);
+            background: rgba(34, 197, 94, 0.15);
+            color: #86EFAC;
+        }
+
+        .binary-option.no.selected {
+            border-color: var(--danger);
+            background: rgba(239, 68, 68, 0.15);
+            color: #FCA5A5;
+        }
+
+        .binary-option:not(.selected) {
+            color: var(--text-muted);
+        }
     </style>
 </head>
 
 <body>
     <div class="app-layout">
         <aside class="sidebar"></aside>
-
         <main class="main-content">
             <header class="topbar"></header>
-
             <div class="page-wrapper">
+
                 <div class="flex justify-between items-center" style="margin-bottom: var(--space-xl);">
                     <div>
                         <h1 class="text-gradient">Captura de Monitoreo</h1>
-                        <p class="text-secondary">Registro de indicadores en campo</p>
+                        <p class="text-secondary">Instrumento digital de campo — +PaZion MEAL</p>
                     </div>
                     <div class="flex items-center gap-sm">
                         <span class="text-sm fw-600">Paso <span id="currentStepNum">1</span> de 3</span>
                     </div>
                 </div>
 
-                <!-- STEP 1: Selección de Indicador -->
+                <!-- ══════════════════════════════════════════════════
+                     PASO 1: Selección de Indicador
+                ══════════════════════════════════════════════════ -->
                 <div id="step1" class="step active">
                     <div class="card">
-                        <h2 style="margin-bottom: var(--space-lg);">Seleccione el Indicador</h2>
+                        <h2 style="margin-bottom: var(--space-lg);">¿Qué vamos a medir hoy?</h2>
                         <div class="form-group">
                             <label class="form-label">Eje Estratégico</label>
                             <select id="ejeSelector" class="form-control">
@@ -79,115 +271,107 @@
                                 <option value="">-- Primero seleccione un Eje --</option>
                             </select>
                         </div>
-                        <div id="indMeta" class="alert alert-info hidden">
-                            <strong>Meta Meta Anual:</strong> <span id="metaText"></span>
+                        <div id="indInfo" class="hidden" style="margin-top: var(--space-md);">
+                            <div class="alert alert-info" style="margin-bottom: 0;">
+                                <div>
+                                    <div style="font-weight:700; margin-bottom:4px;">📋 <span id="indNombre"></span>
+                                    </div>
+                                    <div style="font-size:13px;"><strong>Meta:</strong> <span id="indMeta"></span></div>
+                                    <div style="font-size:13px; margin-top:4px;"><strong>Cómo se mide:</strong> <span
+                                            id="indMetodo"></span></div>
+                                </div>
+                            </div>
                         </div>
                         <div class="flex justify-end" style="margin-top: var(--space-xl);">
-                            <button id="btnToStep2" class="btn btn-primary" disabled>Continuar a Instrucciones</button>
+                            <button id="btnToStep2" class="btn btn-primary" disabled>Iniciar Encuesta →</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- STEP 2: Capacitación / Instrucciones -->
+                <!-- ══════════════════════════════════════════════════
+                     PASO 2: Encuesta Digital de Campo
+                ══════════════════════════════════════════════════ -->
                 <div id="step2" class="step">
-                    <div class="card">
-                        <h2 style="margin-bottom: var(--space-lg);">Módulo de Capacitación</h2>
-                        <div class="flex flex-col gap-lg">
+                    <div class="card" style="margin-bottom: var(--space-lg);">
+                        <div class="flex justify-between items-center">
                             <div>
-                                <h3 id="instTitle" class="text-gradient">Guía para el registro</h3>
-                                <p id="instDef" class="text-secondary" style="margin-top: var(--space-sm);"></p>
+                                <h2 id="surveyTitle" style="margin-bottom: 4px;"></h2>
+                                <p id="surveyInstruccion" class="text-secondary" style="font-size:14px;"></p>
                             </div>
-
-                            <div class="grid grid-2">
-                                <div style="text-align: center;">
-                                    <div
-                                        style="margin-bottom: var(--space-sm); color: var(--success); font-weight: 700;">
-                                        ✅ Correcto (Referencia)</div>
-                                    <img src="https://placehold.co/400x250/064E3B/D1FAF0?text=Evidencia+Correcta"
-                                        alt="Correcto"
-                                        style="border-radius: var(--radius-md); border: 2px solid var(--success);">
-                                </div>
-                                <div style="text-align: center;">
-                                    <div
-                                        style="margin-bottom: var(--space-sm); color: var(--danger); font-weight: 700;">
-                                        ❌ Incorrecto</div>
-                                    <img src="https://placehold.co/400x250/450A0A/FECACA?text=Evidencia+Incorrecta"
-                                        alt="Incorrecto"
-                                        style="border-radius: var(--radius-md); border: 2px solid var(--danger);">
-                                </div>
-                            </div>
-
-                            <div class="alert alert-warning">
-                                <div class="form-check">
-                                    <input type="checkbox" id="checkRead">
-                                    <label for="checkRead"><strong>Confirmo que he leído y comprendido las instrucciones
-                                            de captura para este indicador.</strong></label>
-                                </div>
-                            </div>
-
-                            <div class="flex justify-between" style="margin-top: var(--space-md);">
-                                <button onclick="goToStep(1)" class="btn btn-ghost">Atrás</button>
-                                <button id="btnToStep3" class="btn btn-primary" disabled>Iniciar Captura</button>
-                            </div>
+                            <span id="surveyBadge" class="badge badge-purple"></span>
                         </div>
+                    </div>
+
+                    <!-- Contenedor dinámico de participantes -->
+                    <div id="participantesContainer"></div>
+
+                    <!-- Botón agregar -->
+                    <button id="btnAgregarParticipante" class="btn btn-secondary btn-full"
+                        style="margin-bottom: var(--space-lg);">
+                        ➕ Agregar participante / registro
+                    </button>
+
+                    <!-- Resumen en tiempo real -->
+                    <div id="resumenLive" class="card" style="margin-bottom: var(--space-lg); display:none;">
+                        <h3 style="margin-bottom: var(--space-md);">📊 Resultado de la sesión</h3>
+                        <div id="resumenContent"></div>
+                    </div>
+
+                    <div class="flex justify-between">
+                        <button onclick="goToStep(1)" class="btn btn-ghost">← Atrás</button>
+                        <button id="btnToStep3" class="btn btn-primary" disabled>Ver Resumen y Guardar →</button>
                     </div>
                 </div>
 
-                <!-- STEP 3: Formulario de Registro -->
+                <!-- ══════════════════════════════════════════════════
+                     PASO 3: Confirmación, Evidencia y Firma
+                ══════════════════════════════════════════════════ -->
                 <div id="step3" class="step">
-                    <form id="captureForm">
-                        <div class="grid grid-2">
-                            <div class="card">
-                                <h3 style="margin-bottom: var(--space-lg);">Datos del Registro</h3>
-                                <div class="form-group">
-                                    <label class="form-label">Valor del Indicador <small>(Número o Texto según
-                                            definición)</small></label>
-                                    <input type="text" id="valorInput" class="form-control"
-                                        placeholder="Ingrese el resultado..." required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Observaciones / Comentarios</label>
-                                    <textarea id="obsInput" class="form-control"
-                                        placeholder="Detalles adicionales del levantamiento..."></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">Geolocalización (GPS)</label>
-                                    <div class="flex items-center gap-md">
-                                        <div id="gpsCoords" class="text-sm text-muted">Aún no capturado</div>
-                                        <button type="button" id="btnGetGPS" class="btn btn-secondary btn-sm">📍
-                                            Capturar Ubicación</button>
-                                    </div>
-                                    <div id="gpsStatusText" class="text-xs" style="margin-top: 5px;"></div>
-                                </div>
+                    <div class="grid grid-2" style="gap: var(--space-lg);">
+                        <!-- Resumen KPI -->
+                        <div>
+                            <div class="card" style="margin-bottom: var(--space-lg);">
+                                <h3 style="margin-bottom: var(--space-lg);">✅ Resumen de la Sesión</h3>
+                                <div id="resumenFinal"></div>
                             </div>
-
                             <div class="card">
-                                <h3 style="margin-bottom: var(--space-lg);">Evidencia y Firma</h3>
-                                <div class="form-group">
-                                    <label class="form-label">Evidencia Fotográfica</label>
-                                    <input type="file" id="photoInput" accept="image/*" class="hidden">
-                                    <button type="button" onclick="document.getElementById('photoInput').click()"
-                                        class="btn btn-ghost btn-full">📷 Cargar Foto</button>
-                                    <div id="photoPreview" class="photo-preview">
-                                        <span class="text-muted">Sin imagen cargada</span>
+                                <h3 style="margin-bottom: var(--space-lg);">📍 Geolocalización</h3>
+                                <div class="flex items-center gap-md">
+                                    <div id="gpsCoords" class="text-sm text-muted" style="flex:1;">Aún no capturado
                                     </div>
+                                    <button type="button" id="btnGetGPS" class="btn btn-secondary btn-sm">📍 Capturar
+                                        GPS</button>
                                 </div>
-                                <div class="form-group">
-                                    <label class="form-label">Firma del Beneficiario/Técnico</label>
-                                    <canvas id="signatureCanvas" class="signature-canvas"></canvas>
-                                    <div class="flex justify-end" style="margin-top: 5px;">
-                                        <button type="button" id="btnClearSignature" class="btn btn-ghost btn-sm">Borrar
-                                            Firma</button>
-                                    </div>
-                                </div>
+                                <div id="gpsStatusText" class="text-xs" style="margin-top:5px;"></div>
                             </div>
                         </div>
 
-                        <div class="flex justify-between" style="margin-top: var(--space-xl);">
-                            <button type="button" onclick="goToStep(2)" class="btn btn-ghost">Atrás</button>
-                            <button type="submit" class="btn btn-primary btn-lg">💾 Finalizar y Guardar</button>
+                        <!-- Evidencia y firma -->
+                        <div>
+                            <div class="card" style="margin-bottom: var(--space-lg);">
+                                <h3 style="margin-bottom: var(--space-lg);">📷 Evidencia Fotográfica</h3>
+                                <input type="file" id="photoInput" accept="image/*" class="hidden">
+                                <button type="button" onclick="document.getElementById('photoInput').click()"
+                                    class="btn btn-ghost btn-full">📷 Cargar Foto de la Sesión</button>
+                                <div id="photoPreview" class="photo-preview">
+                                    <span class="text-muted" style="font-size:13px;">Sin imagen cargada</span>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <h3 style="margin-bottom: var(--space-lg);">✍️ Firma del Técnico</h3>
+                                <canvas id="signatureCanvas" class="signature-canvas"></canvas>
+                                <div class="flex justify-end" style="margin-top:5px;">
+                                    <button type="button" id="btnClearSignature"
+                                        class="btn btn-ghost btn-sm">Borrar</button>
+                                </div>
+                            </div>
                         </div>
-                    </form>
+                    </div>
+
+                    <div class="flex justify-between" style="margin-top: var(--space-xl);">
+                        <button onclick="goToStep(2)" class="btn btn-ghost">← Atrás</button>
+                        <button id="btnGuardar" class="btn btn-primary btn-lg">💾 Guardar Sesión Completa</button>
+                    </div>
                 </div>
 
             </div>
@@ -195,33 +379,134 @@
     </div>
 
     <script type="module">
-        import { initUI, showToast } from './js/app.js?v=6';
-        import { initDB, addData, ensureDataSeeded } from './js/db.js?v=6';
-        import { SignaturePad } from './js/firma.js?v=6';
-        import { getCurrentUser } from './js/auth.js?v=6';
+        import { initUI, showToast } from './js/app.js?v=7';
+        import { initDB, addData, ensureDataSeeded } from './js/db.js?v=7';
+        import { SignaturePad } from './js/firma.js?v=7';
+        import { getCurrentUser } from './js/auth.js?v=7';
 
         initUI();
 
-        // ─── DATOS MAESTROS INCRUSTADOS (no dependen de IndexedDB) ────────────
-        // Esto garantiza que los ejes e indicadores SIEMPRE estén disponibles,
-        // independientemente del estado del Service Worker o IndexedDB.
+        // ═══════════════════════════════════════════════════════════════
+        // CONFIGURACIÓN DE INDICADORES — Preguntas específicas por cada uno
+        // ═══════════════════════════════════════════════════════════════
         const INDICADORES = [
-            { id: 1, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Índice de Autoconfianza', meta: '80% con aumento >3 puntos' },
-            { id: 2, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Agencia de Decisión', meta: '100% de las participantes' },
-            { id: 3, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Identificación de Derechos', meta: '90% de las participantes' },
-            { id: 4, eje: 'Construcción de Paz y Territorio', nombre: 'Percepción de Espacio Seguro', meta: '95% de percepción positiva' },
-            { id: 5, eje: 'Construcción de Paz y Territorio', nombre: 'Resolución de Conflictos', meta: 'Reducción del 50% en incidentes' },
-            { id: 6, eje: 'Construcción de Paz y Territorio', nombre: 'Vínculo Intercultural', meta: '1 encuentro bimensual' },
-            { id: 7, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Tasa de Retención', meta: '85% de retención anual' },
-            { id: 8, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Desempeño Competitivo', meta: 'Mínimo 2 torneos anuales' },
-            { id: 9, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Escalamiento Deportivo', meta: '2-3 jugadoras por ciclo' }
+            {
+                id: 1,
+                eje: 'Empoderamiento y Liderazgo Femenino',
+                nombre: 'Índice de Autoconfianza',
+                meta: '80% con aumento >3 puntos',
+                metodo: 'Encuesta de Entrada vs. Salida (escala 1-10)',
+                tipo: 'escala',
+                umbral: 3, // puntos de aumento para "logrado"
+                metaPct: 80,
+                instruccion: 'Registra el puntaje de seguridad personal de cada niña (escala 1 a 10). Primero su puntuación de línea base y luego la actual.',
+                preguntaBase: '¿Qué tan segura se siente consigo misma? (antes del programa)',
+                preguntaActual: '¿Qué tan segura se siente consigo misma? (ahora)',
+            },
+            {
+                id: 2,
+                eje: 'Empoderamiento y Liderazgo Femenino',
+                nombre: 'Agencia de Decisión',
+                meta: '100% de las participantes',
+                metodo: 'Encuesta directa (Sí/No)',
+                tipo: 'binario',
+                metaPct: 100,
+                instruccion: 'Pregunta a cada participante: ¿Tomaste al menos una decisión importante por ti misma este mes?',
+                pregunta: '¿Tomaste al menos una decisión importante por ti misma este mes?',
+            },
+            {
+                id: 3,
+                eje: 'Empoderamiento y Liderazgo Femenino',
+                nombre: 'Identificación de Derechos',
+                meta: '90% de las participantes',
+                metodo: 'Encuesta directa (Sí/No)',
+                tipo: 'binario',
+                metaPct: 90,
+                instruccion: 'Pregunta a cada participante: ¿Puedes mencionar al menos 3 derechos que tienes como niña/mujer?',
+                pregunta: '¿Puede mencionar al menos 3 de sus derechos como niña/mujer?',
+            },
+            {
+                id: 4,
+                eje: 'Construcción de Paz y Territorio',
+                nombre: 'Percepción de Espacio Seguro',
+                meta: '95% de percepción positiva',
+                metodo: 'Encuesta de percepción (escala 1-10)',
+                tipo: 'escala',
+                umbral: 7, // puntaje mínimo para "percepción positiva"
+                metaPct: 95,
+                instruccion: 'Registra cómo cada participante percibe el espacio del programa (1=nada seguro, 10=totalmente seguro).',
+                preguntaActual: '¿Qué tan seguro y cómodo sientes el espacio del programa?',
+                modoUnico: true, // solo puntaje actual, no base
+            },
+            {
+                id: 5,
+                eje: 'Construcción de Paz y Territorio',
+                nombre: 'Resolución de Conflictos',
+                meta: 'Reducción del 50% en incidentes',
+                metodo: 'Conteo de incidentes del período',
+                tipo: 'conteo',
+                instruccion: 'Registra el número total de incidentes de conflicto en el período de reporte.',
+                labelConteo: 'Número de incidentes reportados en este período',
+                labelAnterior: 'Número de incidentes en el período anterior (referencia)',
+                metaDescripcion: 'Meta: reducir al menos 50% vs. período anterior',
+            },
+            {
+                id: 6,
+                eje: 'Construcción de Paz y Territorio',
+                nombre: 'Vínculo Intercultural',
+                meta: '1 encuentro bimensual',
+                metodo: 'Conteo de encuentros interculturales realizados',
+                tipo: 'conteo',
+                instruccion: 'Registra el número de encuentros interculturales realizados en el bimestre.',
+                labelConteo: 'Encuentros interculturales realizados este bimestre',
+                metaDescripcion: 'Meta: al menos 1 encuentro por bimestre',
+            },
+            {
+                id: 7,
+                eje: 'Permanencia y Excelencia Deportiva',
+                nombre: 'Tasa de Retención',
+                meta: '85% de retención anual',
+                metodo: 'Conteo de activas vs. inscritas inicialmente',
+                tipo: 'retencion',
+                instruccion: 'Ingresa el total de jugadoras inscritas al inicio del período y cuántas siguen activas.',
+                metaPct: 85,
+            },
+            {
+                id: 8,
+                eje: 'Permanencia y Excelencia Deportiva',
+                nombre: 'Desempeño Competitivo',
+                meta: 'Mínimo 2 torneos anuales',
+                metodo: 'Conteo de torneos participados en el año',
+                tipo: 'conteo',
+                instruccion: 'Registra el número de torneos o competencias en los que el equipo ha participado este año.',
+                labelConteo: 'Torneos / competencias participadas este año',
+                metaDescripcion: 'Meta: mínimo 2 torneos por año',
+            },
+            {
+                id: 9,
+                eje: 'Permanencia y Excelencia Deportiva',
+                nombre: 'Escalamiento Deportivo',
+                meta: '2-3 jugadoras por ciclo',
+                metodo: 'Conteo de jugadoras promovidas en el ciclo',
+                tipo: 'conteo',
+                instruccion: 'Registra cuántas jugadoras fueron promovidas o escaladas a nivel superior en este ciclo.',
+                labelConteo: 'Jugadoras promovidas / escaladas en este ciclo',
+                metaDescripcion: 'Meta: entre 2 y 3 jugadoras por ciclo',
+            },
         ];
 
+        // ═══════════════════════════════════════════════════════════════
+        // ESTADO GLOBAL
+        // ═══════════════════════════════════════════════════════════════
         let sigPad;
         let selectedInd = null;
+        let participantes = []; // datos recopilados en paso 2
         let gpsData = null;
+        let conteoData = {}; // para indicadores tipo conteo/retencion
 
-        // ─── POBLAR EJES INMEDIATAMENTE (síncrono, sin async) ─────────────────
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 1: Poblar ejes e indicadores
+        // ═══════════════════════════════════════════════════════════════
         (function poblarEjes() {
             const ejes = [...new Set(INDICADORES.map(i => i.eje))];
             const ejeSel = document.getElementById('ejeSelector');
@@ -233,17 +518,18 @@
             });
         })();
 
-        // Inicializar BD en background (solo para guardar capturas)
         initDB().then(() => ensureDataSeeded()).catch(err =>
-            console.warn('BD no disponible, modo solo-formulario:', err)
+            console.warn('BD no disponible:', err)
         );
 
-        // ─── SELECTORES DINÁMICOS ──────────────────────────────────────────────
-        document.getElementById('ejeSelector').addEventListener('change', (e) => {
+        document.getElementById('ejeSelector').addEventListener('change', e => {
             const indSel = document.getElementById('indicadorSelector');
             const ejeValue = e.target.value;
-
             indSel.innerHTML = '<option value="">-- Seleccione un Indicador --</option>';
+            selectedInd = null;
+            document.getElementById('indInfo').classList.add('hidden');
+            document.getElementById('btnToStep2').disabled = true;
+
             if (ejeValue) {
                 const filtered = INDICADORES.filter(i => i.eje === ejeValue);
                 filtered.forEach(i => {
@@ -256,124 +542,433 @@
             } else {
                 indSel.disabled = true;
             }
-            selectedInd = null;
-            document.getElementById('indMeta').classList.add('hidden');
-            updateBtnStep2();
         });
 
-        document.getElementById('indicadorSelector').addEventListener('change', (e) => {
+        document.getElementById('indicadorSelector').addEventListener('change', e => {
             const id = parseInt(e.target.value);
             selectedInd = INDICADORES.find(i => i.id === id) || null;
-
             if (selectedInd) {
-                document.getElementById('indMeta').classList.remove('hidden');
-                document.getElementById('metaText').textContent = selectedInd.meta;
-                document.getElementById('instTitle').textContent = `Guía: ${selectedInd.nombre}`;
-                document.getElementById('instDef').innerHTML = `<strong>Definición:</strong> Mide el progreso del indicador base según la meta institucional de ${selectedInd.meta}. Asegúrese de que la evidencia cumpla con los estándares de calidad MEAL.`;
+                document.getElementById('indInfo').classList.remove('hidden');
+                document.getElementById('indNombre').textContent = selectedInd.nombre;
+                document.getElementById('indMeta').textContent = selectedInd.meta;
+                document.getElementById('indMetodo').textContent = selectedInd.metodo;
+                document.getElementById('btnToStep2').disabled = false;
             } else {
-                document.getElementById('indMeta').classList.add('hidden');
+                document.getElementById('indInfo').classList.add('hidden');
+                document.getElementById('btnToStep2').disabled = true;
             }
-            updateBtnStep2();
         });
 
-        function updateBtnStep2() {
-            document.getElementById('btnToStep2').disabled = !selectedInd;
+        document.getElementById('btnToStep2').addEventListener('click', () => {
+            participantes = [];
+            conteoData = {};
+            configurarPaso2();
+            goToStep(2);
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 2: Configurar encuesta según tipo de indicador
+        // ═══════════════════════════════════════════════════════════════
+        function configurarPaso2() {
+            const ind = selectedInd;
+            document.getElementById('surveyTitle').textContent = ind.nombre;
+            document.getElementById('surveyInstruccion').textContent = ind.instruccion;
+            document.getElementById('surveyBadge').textContent = ind.eje.split(' ')[0] + '...';
+
+            const container = document.getElementById('participantesContainer');
+            container.innerHTML = '';
+
+            const tipos = {
+                escala: () => renderEncuestaEscala(),
+                binario: () => renderEncuestaBinario(),
+                conteo: () => renderEncuestaConteo(),
+                retencion: () => renderEncuestaRetencion(),
+            };
+
+            const btnAgregar = document.getElementById('btnAgregarParticipante');
+
+            if (ind.tipo === 'conteo' || ind.tipo === 'retencion') {
+                btnAgregar.style.display = 'none';
+                tipos[ind.tipo]();
+            } else {
+                btnAgregar.style.display = '';
+                btnAgregar.textContent = '➕ Agregar otra participante';
+                agregarParticipante();
+            }
+
+            actualizarResumenLive();
         }
 
-        // ─── NAVEGACIÓN DE PASOS ───────────────────────────────────────────────
-        window.goToStep = (step) => {
-            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-            document.getElementById(`step${step}`).classList.add('active');
-            document.getElementById('currentStepNum').textContent = step;
+        function agregarParticipante() {
+            const ind = selectedInd;
+            if (ind.tipo === 'escala') renderEncuestaEscala(true);
+            else if (ind.tipo === 'binario') renderEncuestaBinario(true);
+        }
 
-            if (step === 3 && !sigPad) {
-                setTimeout(() => { sigPad = new SignaturePad('signatureCanvas'); }, 100);
-            }
+        document.getElementById('btnAgregarParticipante').addEventListener('click', () => {
+            agregarParticipante();
+            actualizarResumenLive();
+        });
+
+        // ── Encuesta tipo ESCALA (1-10) ──────────────────────────────
+        function renderEncuestaEscala(append = false) {
+            const ind = selectedInd;
+            const idx = document.querySelectorAll('.participant-row').length;
+            const pIdx = idx; // índice para participantes[]
+            participantes.push({ nombre: '', base: 5, actual: 5 });
+
+            const div = document.createElement('div');
+            div.className = 'participant-row';
+            div.dataset.idx = pIdx;
+
+            const tieneBase = !ind.modoUnico;
+
+            div.innerHTML = `
+                <div class="participant-header">
+                    <span class="participant-number">Participante #${pIdx + 1}</span>
+                    ${pIdx > 0 ? `<button class="btn-remove" onclick="removeParticipante(${pIdx})">✕ Quitar</button>` : ''}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nombre (opcional)</label>
+                    <input type="text" class="form-control p-nombre" placeholder="Nombre o código de la participante"
+                        oninput="updateParticipante(${pIdx}, 'nombre', this.value)">
+                </div>
+                ${tieneBase ? `
+                <div class="form-group">
+                    <label class="form-label">${ind.preguntaBase}</label>
+                    <div class="scale-input">
+                        <div class="scale-track">
+                            <span style="font-size:12px; color:var(--text-muted);">1</span>
+                            <input type="range" min="1" max="10" value="5" class="p-base"
+                                oninput="updateSlider(this,'base-val-${pIdx}','base',(${pIdx}))">
+                            <span style="font-size:12px; color:var(--text-muted);">10</span>
+                            <div class="scale-value" id="base-val-${pIdx}">5</div>
+                        </div>
+                        <div class="scale-labels"><span>Muy baja</span><span>Alta</span></div>
+                    </div>
+                </div>` : ''}
+                <div class="form-group">
+                    <label class="form-label">${ind.preguntaActual || ind.preguntaBase}</label>
+                    <div class="scale-input">
+                        <div class="scale-track">
+                            <span style="font-size:12px; color:var(--text-muted);">1</span>
+                            <input type="range" min="1" max="10" value="5" class="p-actual"
+                                oninput="updateSlider(this,'actual-val-${pIdx}','actual',(${pIdx}))">
+                            <span style="font-size:12px; color:var(--text-muted);">10</span>
+                            <div class="scale-value" id="actual-val-${pIdx}">5</div>
+                        </div>
+                        <div class="scale-labels"><span>Muy baja</span><span>Alta</span></div>
+                    </div>
+                </div>
+                <div id="resultado-${pIdx}"></div>
+            `;
+            document.getElementById('participantesContainer').appendChild(div);
+            updateResultado(pIdx);
+        }
+
+        window.updateSlider = (input, valId, campo, pIdx) => {
+            const v = parseInt(input.value);
+            document.getElementById(valId).textContent = v;
+            updateParticipante(pIdx, campo, v);
+            updateResultado(pIdx);
+            actualizarResumenLive();
         };
 
-        document.getElementById('btnToStep2').addEventListener('click', () => goToStep(2));
-        document.getElementById('checkRead').addEventListener('change', (e) => {
-            document.getElementById('btnToStep3').disabled = !e.target.checked;
-        });
-        document.getElementById('btnToStep3').addEventListener('click', () => goToStep(3));
+        window.updateParticipante = (idx, campo, valor) => {
+            if (participantes[idx]) participantes[idx][campo] = valor;
+            if (campo === 'base' || campo === 'actual') updateResultado(idx);
+        };
 
-        // ─── GPS ───────────────────────────────────────────────────────────────
+        function updateResultado(pIdx) {
+            const ind = selectedInd;
+            if (!ind || ind.tipo !== 'escala') return;
+            const p = participantes[pIdx];
+            if (!p) return;
+            const el = document.getElementById(`resultado-${pIdx}`);
+            if (!el) return;
+
+            if (ind.modoUnico) {
+                const logrado = p.actual >= ind.umbral;
+                el.innerHTML = `<span class="resultado-pill ${logrado ? 'logrado' : 'no-logrado'}">
+                    ${logrado ? '✅ Percepción positiva' : '⚠️ Percepción baja'} (${p.actual}/10)</span>`;
+            } else {
+                const aumento = p.actual - p.base;
+                const logrado = aumento >= ind.umbral;
+                el.innerHTML = `<span class="resultado-pill ${aumento > 0 ? (logrado ? 'logrado' : 'neutral') : 'no-logrado'}">
+                    ${aumento > 0 ? '+' : ''}${aumento} puntos — ${logrado ? '✅ Meta lograda' : aumento > 0 ? '⬆️ Con mejora' : '↔️ Sin avance'}</span>`;
+            }
+        }
+
+        // ── Encuesta tipo BINARIO (Si/No) ────────────────────────────
+        function renderEncuestaBinario(append = false) {
+            const ind = selectedInd;
+            const pIdx = document.querySelectorAll('.participant-row').length;
+            participantes.push({ nombre: '', respuesta: null });
+
+            const div = document.createElement('div');
+            div.className = 'participant-row';
+            div.dataset.idx = pIdx;
+            div.innerHTML = `
+                <div class="participant-header">
+                    <span class="participant-number">Participante #${pIdx + 1}</span>
+                    ${pIdx > 0 ? `<button class="btn-remove" onclick="removeParticipante(${pIdx})">✕ Quitar</button>` : ''}
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Nombre (opcional)</label>
+                    <input type="text" class="form-control" placeholder="Nombre o código"
+                        oninput="updateParticipante(${pIdx},'nombre',this.value)">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">${ind.pregunta}</label>
+                    <div class="binary-toggle">
+                        <div class="binary-option si" id="bin-si-${pIdx}" onclick="selectBinary(${pIdx}, true)">✅ Sí</div>
+                        <div class="binary-option no" id="bin-no-${pIdx}" onclick="selectBinary(${pIdx}, false)">❌ No</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('participantesContainer').appendChild(div);
+        }
+
+        window.selectBinary = (pIdx, valor) => {
+            participantes[pIdx].respuesta = valor;
+            document.getElementById(`bin-si-${pIdx}`).className = `binary-option si${valor === true  ? ' selected' : ''}`;
+            document.getElementById(`bin-no-${pIdx}`).className = `binary-option no${valor === false ? ' selected' : ''}`;
+            actualizarResumenLive();
+        };
+
+        // ── Encuesta tipo CONTEO ─────────────────────────────────────
+        function renderEncuestaConteo() {
+            const ind = selectedInd;
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+                <div class="alert alert-info" style="margin-bottom: var(--space-lg);">${ind.instruccion}</div>
+                ${ind.labelAnterior ? `
+                <div class="form-group">
+                    <label class="form-label">${ind.labelAnterior}</label>
+                    <input type="number" min="0" id="conteoAnterior" class="form-control" value="0" placeholder="0"
+                        oninput="updateConteo()">
+                </div>` : ''}
+                <div class="form-group">
+                    <label class="form-label">${ind.labelConteo}</label>
+                    <input type="number" min="0" id="conteoActual" class="form-control" value="0" placeholder="0"
+                        oninput="updateConteo()">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Observaciones</label>
+                    <textarea id="conteoObs" class="form-control" placeholder="Contexto, detalles del período..."></textarea>
+                </div>
+                <p class="form-hint">${ind.metaDescripcion || ''}</p>
+            `;
+            document.getElementById('participantesContainer').appendChild(div);
+            document.getElementById('btnToStep3').disabled = false;
+        }
+
+        window.updateConteo = () => {
+            const actual = parseInt(document.getElementById('conteoActual')?.value || 0);
+            const anterior = parseInt(document.getElementById('conteoAnterior')?.value || 0);
+            const obs = document.getElementById('conteoObs')?.value || '';
+            conteoData = { actual, anterior, obs };
+            actualizarResumenLive();
+        };
+
+        // ── Encuesta tipo RETENCIÓN ──────────────────────────────────
+        function renderEncuestaRetencion() {
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+                <div class="alert alert-info" style="margin-bottom: var(--space-lg);">${selectedInd.instruccion}</div>
+                <div class="grid grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Jugadoras inscritas al inicio</label>
+                        <input type="number" min="1" id="retTotal" class="form-control" value="1" oninput="updateConteo()">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Jugadoras activas actualmente</label>
+                        <input type="number" min="0" id="retActivas" class="form-control" value="0" oninput="updateConteo()">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Observaciones</label>
+                    <textarea id="conteoObs" class="form-control" placeholder="Razones de bajas, novedades..."></textarea>
+                </div>
+            `;
+            document.getElementById('participantesContainer').appendChild(div);
+            document.getElementById('btnToStep3').disabled = false;
+        }
+
+        // ── Quitar participante ──────────────────────────────────────
+        window.removeParticipante = (pIdx) => {
+            participantes.splice(pIdx, 1);
+            configurarPaso2(); // re-render
+        };
+
+        // ── Resumen en vivo ──────────────────────────────────────────
+        function actualizarResumenLive() {
+            const ind = selectedInd;
+            if (!ind) return;
+            const resumenDiv = document.getElementById('resumenLive');
+            const resumenContent = document.getElementById('resumenContent');
+            const btn = document.getElementById('btnToStep3');
+
+            let html = '';
+            let puedeGuardar = false;
+
+            if (ind.tipo === 'escala') {
+                const validos = participantes.filter(p =>
+                    ind.modoUnico ? p.actual >= 1 : (p.base >= 1 && p.actual >= 1)
+                );
+                const logrados = validos.filter(p =>
+                    ind.modoUnico ? p.actual >= ind.umbral : (p.actual - p.base) >= ind.umbral
+                );
+                const pct = validos.length > 0 ? Math.round(logrados.length / validos.length * 100) : 0;
+                const alMeta = pct >= ind.metaPct;
+
+                html = `<div class="resumen-kpi">
+                    <div class="kpi-value">${pct}%</div>
+                    <div class="kpi-label">${ind.modoUnico ? 'con percepción positiva' : 'con aumento ≥' + ind.umbral + ' puntos'}</div>
+                    <div class="kpi-meta">Meta: ${ind.metaPct}% — ${logrados.length} de ${validos.length} participantes — ${alMeta ? '✅ META LOGRADA' : '⚠️ Por debajo de meta'}</div>
+                </div>`;
+                puedeGuardar = validos.length > 0;
+
+            } else if (ind.tipo === 'binario') {
+                const respondidos = participantes.filter(p => p.respuesta !== null);
+                const positivos = respondidos.filter(p => p.respuesta === true);
+                const pct = respondidos.length > 0 ? Math.round(positivos.length / respondidos.length * 100) : 0;
+
+                html = `<div class="resumen-kpi">
+                    <div class="kpi-value">${pct}%</div>
+                    <div class="kpi-label">respondieron Sí</div>
+                    <div class="kpi-meta">Meta: ${ind.metaPct}% — ${positivos.length} de ${respondidos.length} — ${pct >= ind.metaPct ? '✅ META LOGRADA' : '⚠️ Por debajo de meta'}</div>
+                </div>`;
+                puedeGuardar = respondidos.length > 0;
+
+            } else if (ind.tipo === 'conteo') {
+                const val = conteoData.actual || 0;
+                html = `<div class="resumen-kpi">
+                    <div class="kpi-value">${val}</div>
+                    <div class="kpi-label">${ind.labelConteo}</div>
+                    <div class="kpi-meta">${ind.metaDescripcion || ''}</div>
+                </div>`;
+                puedeGuardar = true;
+
+            } else if (ind.tipo === 'retencion') {
+                const total = parseInt(document.getElementById('retTotal')?.value || 0);
+                const activas = parseInt(document.getElementById('retActivas')?.value || 0);
+                const pct = total > 0 ? Math.round(activas / total * 100) : 0;
+                html = `<div class="resumen-kpi">
+                    <div class="kpi-value">${pct}%</div>
+                    <div class="kpi-label">tasa de retención</div>
+                    <div class="kpi-meta">Meta: ${ind.metaPct}% — ${activas} de ${total} activas — ${pct >= ind.metaPct ? '✅ META LOGRADA' : '⚠️ Por debajo de meta'}</div>
+                </div>`;
+                conteoData = { actual: activas, total, obs: document.getElementById('conteoObs')?.value || '' };
+                puedeGuardar = total > 0;
+            }
+
+            if (html) {
+                resumenDiv.style.display = '';
+                resumenContent.innerHTML = html;
+            }
+            btn.disabled = !puedeGuardar;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // PASO 3: Preparar resumen final
+        // ═══════════════════════════════════════════════════════════════
+        document.getElementById('btnToStep3').addEventListener('click', () => {
+            document.getElementById('resumenFinal').innerHTML =
+                document.getElementById('resumenContent').innerHTML;
+            goToStep(3);
+        });
+
+        // GPS
         document.getElementById('btnGetGPS').addEventListener('click', () => {
             const status = document.getElementById('gpsStatusText');
-            status.textContent = "Obteniendo ubicación...";
-            if (!navigator.geolocation) {
-                status.textContent = "GPS no soportado en este navegador.";
-                return;
-            }
+            status.textContent = 'Obteniendo ubicación...';
+            if (!navigator.geolocation) { status.textContent = 'GPS no soportado.'; return; }
             navigator.geolocation.getCurrentPosition(
-                (pos) => {
+                pos => {
                     gpsData = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy };
                     document.getElementById('gpsCoords').textContent =
                         `Lat: ${gpsData.lat.toFixed(6)}, Lng: ${gpsData.lng.toFixed(6)} (±${gpsData.acc.toFixed(1)}m)`;
-                    status.textContent = "✅ Ubicación capturada correctamente.";
-                    status.style.color = "var(--success)";
+                    status.textContent = '✅ Ubicación capturada.';
+                    status.style.color = 'var(--success)';
                 },
-                () => {
-                    status.textContent = "❌ Error: Permiso denegado o señal débil.";
-                    status.style.color = "var(--danger)";
-                }
+                () => { status.textContent = '❌ Permiso denegado.'; status.style.color = 'var(--danger)'; }
             );
         });
 
-        // ─── FOTO ──────────────────────────────────────────────────────────────
-        document.getElementById('photoInput').addEventListener('change', (e) => {
+        // Foto
+        document.getElementById('photoInput').addEventListener('change', e => {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
+                reader.onload = e => {
                     document.getElementById('photoPreview').innerHTML = `<img src="${e.target.result}">`;
                 };
                 reader.readAsDataURL(file);
             }
         });
 
+        // Firma
         document.getElementById('btnClearSignature').addEventListener('click', () => {
             if (sigPad) sigPad.clear();
         });
 
-        // ─── GUARDAR FORMULARIO ────────────────────────────────────────────────
-        document.getElementById('captureForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // ── Guardar Sesión ───────────────────────────────────────────
+        document.getElementById('btnGuardar').addEventListener('click', async () => {
             const user = getCurrentUser();
+            let firma = null;
 
-            if (!gpsData) {
-                alert("Por favor capture la ubicación GPS antes de continuar.");
-                return;
+            if (!sigPad) {
+                sigPad = new SignaturePad('signatureCanvas');
             }
-            if (sigPad.isEmpty()) {
-                alert("La firma es obligatoria para validar el registro.");
-                return;
+            if (!sigPad.isEmpty()) {
+                firma = sigPad.getDataUrl();
             }
 
-            const registro = {
-                indicador_id: selectedInd.id,
+            const fotoEl = document.getElementById('photoPreview').querySelector('img');
+            const foto = fotoEl ? fotoEl.src : null;
+
+            const sesion = {
+                indicador_id:     selectedInd.id,
                 indicador_nombre: selectedInd.nombre,
-                eje: selectedInd.eje,
-                usuario_id: user?.id,
-                usuario_nombre: user?.nombre,
-                valor: document.getElementById('valorInput').value,
-                observaciones: document.getElementById('obsInput').value,
-                fecha: new Date().toISOString(),
-                gps: gpsData,
-                firma: sigPad.getDataUrl(),
-                estado: 'Pendiente',
-                sync_status: navigator.onLine ? 'Synced' : 'Pending'
+                eje:              selectedInd.eje,
+                tipo:             selectedInd.tipo,
+                usuario_id:       user?.id,
+                usuario_nombre:   user?.nombre,
+                fecha:            new Date().toISOString(),
+                participantes:    selectedInd.tipo === 'escala' || selectedInd.tipo === 'binario' ? participantes : [],
+                conteo:           conteoData,
+                gps:              gpsData,
+                firma,
+                foto,
+                estado:           'Pendiente',
+                sync_status:      navigator.onLine ? 'Synced' : 'Pending',
             };
 
             try {
-                await addData('capturas', registro);
-                showToast("Registro guardado exitosamente" + (!navigator.onLine ? " (Offline)" : ""), "success");
-                setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
-            } catch (error) {
-                console.error(error);
-                showToast("Error al guardar el registro", "error");
+                await addData('capturas', sesion);
+                showToast('✅ Sesión guardada exitosamente' + (!navigator.onLine ? ' (Offline)' : ''), 'success');
+                setTimeout(() => { window.location.href = 'dashboard.html'; }, 1800);
+            } catch (err) {
+                console.error(err);
+                showToast('❌ Error al guardar', 'error');
             }
         });
+
+        // ═══════════════════════════════════════════════════════════════
+        // NAVEGACIÓN
+        // ═══════════════════════════════════════════════════════════════
+        window.goToStep = (step) => {
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+            document.getElementById('currentStepNum').textContent = step;
+
+            if (step === 3 && !sigPad) {
+                setTimeout(() => { sigPad = new SignaturePad('signatureCanvas'); }, 150);
+            }
+        };
     </script>
 </body>
 
