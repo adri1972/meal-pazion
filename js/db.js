@@ -5,7 +5,7 @@
  */
 
 const DB_NAME = 'PazionMEAL';
-const DB_VERSION = 5; // Incrementado para forzar migración limpia y re-sembrar datos
+const DB_VERSION = 6; // v6: limpia datos de prueba - inicio limpio
 
 let db;
 
