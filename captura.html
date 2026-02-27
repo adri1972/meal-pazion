@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Captura de Datos | Sistema MEAL +PaZion</title>
-    <link rel="stylesheet" href="css/main.css?v=4">
+    <link rel="stylesheet" href="css/main.css?v=5">
     <style>
         .step {
             display: none;
@@ -195,10 +195,10 @@
     </div>
 
     <script type="module">
-        import { initUI, showToast } from './js/app.js?v=4';
-        import { initDB, getAllData, addData, ensureDataSeeded } from './js/db.js?v=4';
-        import { SignaturePad } from './js/firma.js?v=4';
-        import { getCurrentUser } from './js/auth.js?v=4';
+        import { initUI, showToast } from './js/app.js?v=5';
+        import { initDB, getAllData, addData, ensureDataSeeded, getIndicadoresMaestros } from './js/db.js?v=5';
+        import { SignaturePad } from './js/firma.js?v=5';
+        import { getCurrentUser } from './js/auth.js?v=5';
 
         initUI();
 
@@ -207,11 +207,23 @@
         let selectedInd = null;
         let gpsData = null;
 
-        // Cargar indicadores
+        // Cargar indicadores desde IndexedDB, con fallback a datos maestros
         async function loadData() {
-            await initDB();
-            await ensureDataSeeded(); // Garantiza que siempre haya datos
-            indicadores = await getAllData('indicadores');
+            try {
+                await initDB();
+                await ensureDataSeeded();
+                indicadores = await getAllData('indicadores');
+                console.log(`loadData: ${indicadores.length} indicadores cargados desde BD.`);
+            } catch (err) {
+                console.error('Error al cargar BD, usando datos maestros:', err);
+                indicadores = [];
+            }
+
+            // Fallback: si la BD no devuelve datos, usar la lista maestra directamente
+            if (indicadores.length === 0) {
+                console.warn('BD vacía. Usando lista maestra de indicadores como fallback.');
+                indicadores = getIndicadoresMaestros();
+            }
 
             const ejes = [...new Set(indicadores.map(i => i.eje))];
             const ejeSel = document.getElementById('ejeSelector');
@@ -221,6 +233,8 @@
                 opt.textContent = eje;
                 ejeSel.appendChild(opt);
             });
+
+            console.log(`Ejes cargados: ${ejes.join(', ')}`);
         }
 
         loadData();

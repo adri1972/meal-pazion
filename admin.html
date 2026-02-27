@@ -5,7 +5,97 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configuración | Sistema MEAL +PaZion</title>
-    <link rel="stylesheet" href="css/main.css?v=4">
+    <link rel="stylesheet" href="css/main.css?v=5">
+    <style>
+        .tab-nav {
+            display: flex;
+            gap: var(--space-sm);
+            border-bottom: 1px solid var(--border);
+            margin-bottom: var(--space-xl);
+        }
+
+        .tab-btn {
+            padding: var(--space-sm) var(--space-lg);
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+            margin-bottom: -1px;
+        }
+
+        .tab-btn.active {
+            color: var(--purple-400);
+            border-bottom-color: var(--purple-400);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .user-avatar-sm {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--purple-400), var(--purple-600));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .role-badge {
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .role-admin {
+            background: rgba(123, 53, 196, 0.2);
+            color: var(--purple-400);
+        }
+
+        .role-coordinator {
+            background: rgba(46, 158, 122, 0.2);
+            color: var(--green-400);
+        }
+
+        .role-technician {
+            background: rgba(59, 130, 246, 0.2);
+            color: var(--info);
+        }
+
+        .stat-mini {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            text-align: center;
+        }
+
+        .stat-mini-value {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--purple-400);
+        }
+
+        .stat-mini-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+    </style>
 </head>
 
 <body>
@@ -23,96 +113,380 @@
                     </div>
                 </div>
 
-                <div class="grid grid-2">
+                <!-- Estadísticas Rápidas -->
+                <div class="grid grid-4" style="margin-bottom: var(--space-xl);" id="quickStats">
+                    <div class="stat-mini">
+                        <div class="stat-mini-value" id="statUsers">—</div>
+                        <div class="stat-mini-label">Usuarios Registrados</div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-value" id="statIndicators">—</div>
+                        <div class="stat-mini-label">Indicadores Activos</div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-value" id="statCaptures">—</div>
+                        <div class="stat-mini-label">Total Capturas</div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-value" id="statPending">—</div>
+                        <div class="stat-mini-label">Pendientes Validación</div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="tab-nav">
+                    <button class="tab-btn active" onclick="switchTab('usuarios')">👥 Usuarios</button>
+                    <button class="tab-btn" onclick="switchTab('indicadores')">📊 Indicadores</button>
+                    <button class="tab-btn" onclick="switchTab('proyectos')">🗂️ Proyectos</button>
+                    <button class="tab-btn" onclick="switchTab('sistema')">⚙️ Sistema</button>
+                </div>
+
+                <!-- TAB: Usuarios -->
+                <div id="tab-usuarios" class="tab-content active">
                     <div class="card">
-                        <h3 style="margin-bottom: var(--space-lg);">Proyectos Activos</h3>
+                        <div class="card-header">
+                            <h3 class="card-title">Gestión de Usuarios</h3>
+                            <button class="btn btn-primary btn-sm" onclick="openUserModal()">➕ Agregar Usuario</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Usuario</th>
+                                        <th>Correo</th>
+                                        <th>Rol</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersList">
+                                    <tr>
+                                        <td colspan="4" class="text-center">Cargando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: Indicadores -->
+                <div id="tab-indicadores" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Indicadores del Programa</h3>
+                            <span class="badge badge-purple" id="totalIndBadge">9 indicadores</span>
+                        </div>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Indicador</th>
+                                        <th>Eje Estratégico</th>
+                                        <th>Meta Anual</th>
+                                        <th>Capturas</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="indicatorsAdmin">
+                                    <tr>
+                                        <td colspan="5" class="text-center">Cargando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: Proyectos -->
+                <div id="tab-proyectos" class="tab-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Proyectos Activos</h3>
+                        </div>
                         <div class="table-wrapper">
                             <table>
                                 <thead>
                                     <tr>
                                         <th>Nombre</th>
                                         <th>Eje</th>
+                                        <th>Meta Global</th>
+                                        <th>Descripción</th>
                                         <th>Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody id="projectsAdmin">
-                                    <!-- Dinámico -->
+                                    <tr>
+                                        <td colspan="5" class="text-center">Cargando...</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
-                        <button class="btn btn-ghost btn-sm btn-full" style="margin-top: var(--space-md);">➕ Crear
-                            Proyecto</button>
-                    </div>
-
-                    <div class="card">
-                        <h3 style="margin-bottom: var(--space-lg);">Configuración Global</h3>
-                        <div class="form-group">
-                            <label class="form-label">Nombre de la Institución</label>
-                            <input type="text" class="form-control" value="Fundación +PaZion / Goles de Vida">
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Sincronización Automática</label>
-                            <div class="form-check">
-                                <input type="checkbox" id="syncAuto" checked>
-                                <label for="syncAuto">Habilitar subida en segundo plano</label>
-                            </div>
-                        </div>
-                        <button class="btn btn-primary">Guardar Cambios</button>
                     </div>
                 </div>
 
-                <div class="card" style="margin-top: var(--space-xl);">
-                    <h3 style="margin-bottom: var(--space-lg);">Gestión de Indicadores</h3>
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Indicador</th>
-                                    <th>Eje</th>
-                                    <th>Meta Anual</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="indicatorsAdmin">
-                                <!-- Dinámico -->
-                            </tbody>
-                        </table>
+                <!-- TAB: Sistema -->
+                <div id="tab-sistema" class="tab-content">
+                    <div class="grid grid-2">
+                        <div class="card">
+                            <h3 style="margin-bottom: var(--space-lg);">Configuración Global</h3>
+                            <div class="form-group">
+                                <label class="form-label">Nombre de la Institución</label>
+                                <input type="text" class="form-control" value="Fundación +PaZion / Goles de Vida">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Período de Reporte Actual</label>
+                                <input type="text" class="form-control" value="Enero - Diciembre 2025">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Sincronización Automática</label>
+                                <div class="form-check">
+                                    <input type="checkbox" id="syncAuto" checked>
+                                    <label for="syncAuto">Habilitar subida en segundo plano al recuperar
+                                        conexión</label>
+                                </div>
+                            </div>
+                            <button class="btn btn-primary">Guardar Cambios</button>
+                        </div>
+
+                        <div class="card">
+                            <h3 style="margin-bottom: var(--space-lg);">Herramientas de BD</h3>
+                            <p class="text-secondary text-sm" style="margin-bottom: var(--space-lg);">
+                                Opciones de mantenimiento de la base de datos local (IndexedDB).
+                            </p>
+                            <div class="flex flex-col gap-md">
+                                <button class="btn btn-secondary" onclick="exportData()">
+                                    📥 Exportar Datos (JSON)
+                                </button>
+                                <button class="btn btn-ghost" onclick="reseedData()">
+                                    🔄 Re-sembrar Datos Maestros
+                                </button>
+                                <div class="alert alert-warning" style="margin-bottom: 0;">
+                                    <strong>Versión BD:</strong> <span id="dbVersionInfo">cargando...</span><br>
+                                    <strong>Última actualización:</strong> <span id="dbLastUpdate">—</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
 
+    <!-- Modal de Usuario -->
+    <div id="userModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="userModalTitle">Agregar Usuario</h2>
+                <button class="modal-close" onclick="closeUserModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editUserId">
+                <div class="form-group">
+                    <label class="form-label">Nombre Completo *</label>
+                    <input type="text" id="userName" class="form-control" placeholder="Ej: María García">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Correo Electrónico *</label>
+                    <input type="email" id="userEmail" class="form-control" placeholder="correo@pazion.org">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Contraseña *</label>
+                    <input type="password" id="userPassword" class="form-control" placeholder="Mínimo 4 caracteres">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Rol del Usuario *</label>
+                    <select id="userRol" class="form-control">
+                        <option value="Técnico de Campo">Técnico de Campo</option>
+                        <option value="Coordinador de Proyecto">Coordinador de Proyecto</option>
+                        <option value="Administrador">Administrador</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeUserModal()">Cancelar</button>
+                <button class="btn btn-primary" id="btnSaveUser" onclick="saveUser()">💾 Guardar Usuario</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
-        import { initUI } from './js/app.js?v=4';
-        import { initDB, getAllData } from './js/db.js?v=4';
+        import { initUI, showToast } from './js/app.js?v=5';
+        import { initDB, getAllData, addData, updateData, ensureDataSeeded } from './js/db.js?v=5';
 
         initUI();
 
+        let allUsers = [];
+        let allIndicators = [];
+        let allCaptures = [];
+        let allProjects = [];
+
         async function loadAdmin() {
             await initDB();
-            const projects = await getAllData('proyectos');
-            const indicators = await getAllData('indicadores');
+            await ensureDataSeeded();
 
-            document.getElementById('projectsAdmin').innerHTML = projects.map(p => `
+            allUsers = await getAllData('usuarios');
+            allIndicators = await getAllData('indicadores');
+            allCaptures = await getAllData('capturas');
+            allProjects = await getAllData('proyectos');
+
+            // Estadísticas rápidas
+            document.getElementById('statUsers').textContent = allUsers.length;
+            document.getElementById('statIndicators').textContent = allIndicators.length;
+            document.getElementById('statCaptures').textContent = allCaptures.length;
+            document.getElementById('statPending').textContent = allCaptures.filter(c => c.estado === 'Pendiente').length;
+            document.getElementById('dbVersionInfo').textContent = 'PazionMEAL v4';
+            document.getElementById('dbLastUpdate').textContent = new Date().toLocaleDateString('es-ES');
+
+            renderUsers();
+            renderIndicators();
+            renderProjects();
+        }
+
+        function renderUsers() {
+            const tbody = document.getElementById('usersList');
+            tbody.innerHTML = allUsers.map(u => {
+                const roleClass = u.rol === 'Administrador' ? 'role-admin' :
+                    u.rol === 'Coordinador de Proyecto' ? 'role-coordinator' : 'role-technician';
+                return `
+                    <tr>
+                        <td>
+                            <div class="flex items-center gap-md">
+                                <div class="user-avatar-sm">${u.nombre.charAt(0)}</div>
+                                <strong>${u.nombre}</strong>
+                            </div>
+                        </td>
+                        <td class="text-sm text-muted">${u.correo}</td>
+                        <td><span class="role-badge ${roleClass}">${u.rol}</span></td>
+                        <td>
+                            <button class="btn btn-ghost btn-sm" onclick="window.editUser(${u.id})">✏️ Editar</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderIndicators() {
+            document.getElementById('totalIndBadge').textContent = `${allIndicators.length} indicadores`;
+            document.getElementById('indicatorsAdmin').innerHTML = allIndicators.map(i => {
+                const caps = allCaptures.filter(c => c.indicador_id === i.id);
+                return `
+                    <tr>
+                        <td class="text-muted">${i.id}</td>
+                        <td><strong>${i.nombre}</strong></td>
+                        <td><span class="text-sm text-muted">${i.eje}</span></td>
+                        <td class="text-sm">${i.meta}</td>
+                        <td>
+                            <span class="badge ${caps.length > 0 ? 'badge-success' : 'badge-warning'}">
+                                ${caps.length} registros
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderProjects() {
+            document.getElementById('projectsAdmin').innerHTML = allProjects.map(p => `
                 <tr>
-                    <td>${p.nombre}</td>
+                    <td><strong>${p.nombre}</strong></td>
                     <td>${p.eje}</td>
-                    <td><span class="badge badge-success">Activo</span></td>
-                </tr>
-            `).join('');
-
-            document.getElementById('indicatorsAdmin').innerHTML = indicators.map(i => `
-                <tr>
-                    <td>${i.nombre}</td>
-                    <td>${i.eje}</td>
-                    <td>${i.meta}</td>
-                    <td>
-                        <button class="btn btn-ghost btn-sm">⚙️ Editar</button>
-                    </td>
+                    <td>${p.meta_global}%</td>
+                    <td class="text-sm text-muted">${p.descripcion || '—'}</td>
+                    <td><span class="badge badge-success">${p.activo ? 'Activo' : 'Inactivo'}</span></td>
                 </tr>
             `).join('');
         }
+
+        // Tabs
+        window.switchTab = (tabName) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            event.target.classList.add('active');
+        };
+
+        // Modal Usuario
+        window.openUserModal = () => {
+            document.getElementById('userModalTitle').textContent = 'Agregar Usuario';
+            document.getElementById('editUserId').value = '';
+            document.getElementById('userName').value = '';
+            document.getElementById('userEmail').value = '';
+            document.getElementById('userPassword').value = '';
+            document.getElementById('userRol').value = 'Técnico de Campo';
+            document.getElementById('userModal').classList.remove('hidden');
+        };
+
+        window.editUser = (id) => {
+            const user = allUsers.find(u => u.id === id);
+            if (!user) return;
+            document.getElementById('userModalTitle').textContent = 'Editar Usuario';
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('userName').value = user.nombre;
+            document.getElementById('userEmail').value = user.correo;
+            document.getElementById('userPassword').value = user.password || '';
+            document.getElementById('userRol').value = user.rol;
+            document.getElementById('userModal').classList.remove('hidden');
+        };
+
+        window.closeUserModal = () => {
+            document.getElementById('userModal').classList.add('hidden');
+        };
+
+        window.saveUser = async () => {
+            const id = document.getElementById('editUserId').value;
+            const nombre = document.getElementById('userName').value.trim();
+            const correo = document.getElementById('userEmail').value.trim();
+            const password = document.getElementById('userPassword').value.trim();
+            const rol = document.getElementById('userRol').value;
+
+            if (!nombre || !correo || !password) {
+                showToast('Todos los campos son requeridos', 'error');
+                return;
+            }
+
+            const userData = { nombre, correo, password, rol };
+
+            try {
+                if (id) {
+                    await updateData('usuarios', { id: parseInt(id), ...userData });
+                    showToast('Usuario actualizado correctamente', 'success');
+                } else {
+                    await addData('usuarios', userData);
+                    showToast('Usuario creado correctamente', 'success');
+                }
+                closeUserModal();
+                allUsers = await getAllData('usuarios');
+                document.getElementById('statUsers').textContent = allUsers.length;
+                renderUsers();
+            } catch (err) {
+                console.error(err);
+                showToast('Error: el correo puede estar duplicado', 'error');
+            }
+        };
+
+        // Exportar datos
+        window.exportData = async () => {
+            const data = {
+                usuarios: allUsers,
+                proyectos: allProjects,
+                indicadores: allIndicators,
+                capturas: allCaptures,
+                exportado: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `backup_meal_pazion_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            showToast('Exportación completada', 'success');
+        };
+
+        // Re-sembrar
+        window.reseedData = async () => {
+            if (!confirm('¿Esto limpiará y re-sembrará los datos maestros de indicadores. Continuar?')) return;
+            await ensureDataSeeded();
+            showToast('Datos re-sembrados correctamente', 'success');
+            loadAdmin();
+        };
 
         loadAdmin();
     </script>

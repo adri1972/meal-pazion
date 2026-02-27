@@ -5,9 +5,39 @@
  */
 
 const DB_NAME = 'PazionMEAL';
-const DB_VERSION = 4;
+const DB_VERSION = 5; // Incrementado para forzar migración limpia y re-sembrar datos
 
 let db;
+
+// Lista maestra de indicadores — fuente de verdad única
+const INDICADORES_MAESTROS = [
+    // Eje 1
+    { id: 1, proyecto_id: 1, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Índice de Autoconfianza', meta: '80% con aumento >3 puntos' },
+    { id: 2, proyecto_id: 1, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Agencia de Decisión', meta: '100% de las participantes' },
+    { id: 3, proyecto_id: 1, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Identificación de Derechos', meta: '90% de las participantes' },
+    // Eje 2
+    { id: 4, proyecto_id: 1, eje: 'Construcción de Paz y Territorio', nombre: 'Percepción de Espacio Seguro', meta: '95% de percepción positiva' },
+    { id: 5, proyecto_id: 1, eje: 'Construcción de Paz y Territorio', nombre: 'Resolución de Conflictos', meta: 'Reducción del 50% en incidentes' },
+    { id: 6, proyecto_id: 1, eje: 'Construcción de Paz y Territorio', nombre: 'Vínculo Intercultural', meta: '1 encuentro bimensual' },
+    // Eje 3
+    { id: 7, proyecto_id: 1, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Tasa de Retención', meta: '85% de retención anual' },
+    { id: 8, proyecto_id: 1, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Desempeño Competitivo', meta: 'Mínimo 2 torneos anuales' },
+    { id: 9, proyecto_id: 1, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Escalamiento Deportivo', meta: '2-3 jugadoras por ciclo' }
+];
+
+const USUARIOS_MAESTROS = [
+    { id: 1, correo: 'admin@pazion.org', nombre: 'Admin PaZion', password: '123', rol: 'Administrador' },
+    { id: 2, correo: 'tecnico@pazion.org', nombre: 'Técnico Campo', password: '123', rol: 'Técnico de Campo' }
+];
+
+const PROYECTO_MAESTRO = {
+    id: 1,
+    nombre: 'Goles de Vida',
+    eje: 'Integral',
+    meta_global: 100,
+    activo: true,
+    descripcion: 'Programa insignia de la Fundación +PaZion para el liderazgo y paz.'
+};
 
 /**
  * Inicializa la base de datos y crea los almacenes de objetos (stores).
@@ -23,128 +53,96 @@ export async function initDB() {
 
         request.onsuccess = (event) => {
             db = event.target.result;
-            console.log('Base de datos inicializada correctamente');
+            console.log(`Base de datos v${DB_VERSION} inicializada correctamente.`);
             resolve(db);
         };
 
         request.onupgradeneeded = (event) => {
-            const db = event.target.result;
+            const dbInstance = event.target.result;
+            const tx = event.target.transaction;
+            console.log(`Migración de BD: v${event.oldVersion} → v${event.newVersion}`);
 
-            // Almacén de Usuarios
-            if (!db.objectStoreNames.contains('usuarios')) {
-                const userStore = db.createObjectStore('usuarios', { keyPath: 'id', autoIncrement: true });
-                userStore.createIndex('correo', 'correo', { unique: true });
-            }
+            // --- Eliminar stores antiguas para empezar limpio ---
+            const storesToDelete = ['usuarios', 'proyectos', 'indicadores', 'capturas'];
+            storesToDelete.forEach(storeName => {
+                if (dbInstance.objectStoreNames.contains(storeName)) {
+                    dbInstance.deleteObjectStore(storeName);
+                }
+            });
 
-            // Almacén de Proyectos
-            if (!db.objectStoreNames.contains('proyectos')) {
-                db.createObjectStore('proyectos', { keyPath: 'id', autoIncrement: true });
-            }
+            // --- Crear stores nuevas ---
+            const userStore = dbInstance.createObjectStore('usuarios', { keyPath: 'id', autoIncrement: true });
+            userStore.createIndex('correo', 'correo', { unique: true });
 
-            // Almacén de Indicadores
-            if (!db.objectStoreNames.contains('indicadores')) {
-                const indicatorStore = db.createObjectStore('indicadores', { keyPath: 'id', autoIncrement: true });
-                indicatorStore.createIndex('proyecto_id', 'proyecto_id', { unique: false });
-            }
+            dbInstance.createObjectStore('proyectos', { keyPath: 'id', autoIncrement: true });
 
-            // Almacén de Capturas (Registros)
-            if (!db.objectStoreNames.contains('capturas')) {
-                const captureStore = db.createObjectStore('capturas', { keyPath: 'id', autoIncrement: true });
-                captureStore.createIndex('indicador_id', 'indicador_id', { unique: false });
-                captureStore.createIndex('estado', 'estado', { unique: false });
-                captureStore.createIndex('sync_status', 'sync_status', { unique: false });
-            }
+            const indicatorStore = dbInstance.createObjectStore('indicadores', { keyPath: 'id', autoIncrement: true });
+            indicatorStore.createIndex('proyecto_id', 'proyecto_id', { unique: false });
+            indicatorStore.createIndex('eje', 'eje', { unique: false });
 
-            // Semilla de datos iniciales
-            seedInitialData(event.currentTarget.transaction);
+            const captureStore = dbInstance.createObjectStore('capturas', { keyPath: 'id', autoIncrement: true });
+            captureStore.createIndex('indicador_id', 'indicador_id', { unique: false });
+            captureStore.createIndex('estado', 'estado', { unique: false });
+            captureStore.createIndex('sync_status', 'sync_status', { unique: false });
+
+            // --- Sembrar datos iniciales en la misma transacción de migración ---
+            _seedWithTransaction(tx);
         };
     });
 }
 
 /**
- * Inserta datos de prueba e indicadores reales de la Fundación.
+ * Siembra datos usando una transacción existente (usada en onupgradeneeded).
+ * @param {IDBTransaction} transaction
  */
-function seedInitialData(transaction) {
+function _seedWithTransaction(transaction) {
     const userStore = transaction.objectStore('usuarios');
-    const projectStore = transaction.objectStore('proyectos');
-    const indicatorStore = transaction.objectStore('indicadores');
+    USUARIOS_MAESTROS.forEach(u => userStore.put(u));
 
-    // Usuarios iniciales
-    const users = [
-        { id: 1, correo: 'admin@pazion.org', nombre: 'Admin PaZion', password: '123', rol: 'Administrador' },
-        { id: 2, correo: 'tecnico@pazion.org', nombre: 'Técnico Campo', password: '123', rol: 'Técnico de Campo' }
-    ];
-    users.forEach(u => userStore.put(u));
+    transaction.objectStore('proyectos').put(PROYECTO_MAESTRO);
 
-    // Proyecto inicial
-    const proyectoId = 1;
-    projectStore.put({
-        id: proyectoId,
-        nombre: 'Goles de Vida',
-        eje: 'Integral',
-        meta_global: 100,
-        activo: true,
-        descripcion: 'Programa insignia de la Fundación +PaZion para el liderazgo y paz.'
-    });
+    const indStore = transaction.objectStore('indicadores');
+    INDICADORES_MAESTROS.forEach(i => indStore.put(i));
 
-    // Indicadores reales
-    const indicadores = [
-        // Eje 1
-        { id: 1, proyecto_id: proyectoId, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Índice de Autoconfianza', meta: '80% con aumento >3 puntos' },
-        { id: 2, proyecto_id: proyectoId, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Agencia de Decisión', meta: '100% de las participantes' },
-        { id: 3, proyecto_id: proyectoId, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Identificación de Derechos', meta: '90% de las participantes' },
-        // Eje 2
-        { id: 4, proyecto_id: proyectoId, eje: 'Construcción de Paz y Territorio', nombre: 'Percepción de Espacio Seguro', meta: '95% de percepción positiva' },
-        { id: 5, proyecto_id: proyectoId, eje: 'Construcción de Paz y Territorio', nombre: 'Resolución de Conflictos', meta: 'Reducción del 50% en incidentes' },
-        { id: 6, proyecto_id: proyectoId, eje: 'Construcción de Paz y Territorio', nombre: 'Vínculo Intercultural', meta: '1 encuentro bimensual' },
-        // Eje 3
-        { id: 7, proyecto_id: proyectoId, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Tasa de Retención', meta: '85% de retención anual' },
-        { id: 8, proyecto_id: proyectoId, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Desempeño Competitivo', meta: 'Mínimo 2 torneos anuales' },
-        { id: 9, proyecto_id: proyectoId, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Escalamiento Deportivo', meta: '2-3 jugadoras por ciclo' }
-    ];
-    indicadores.forEach(i => indicatorStore.put(i));
+    console.log('Datos iniciales sembrados correctamente.');
 }
 
-// Lista maestra de indicadores (usada para re-sembrar si la BD está vacía)
-const INDICADORES_MAESTROS = [
-    { id: 1, proyecto_id: 1, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Índice de Autoconfianza', meta: '80% con aumento >3 puntos' },
-    { id: 2, proyecto_id: 1, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Agencia de Decisión', meta: '100% de las participantes' },
-    { id: 3, proyecto_id: 1, eje: 'Empoderamiento y Liderazgo Femenino', nombre: 'Identificación de Derechos', meta: '90% de las participantes' },
-    { id: 4, proyecto_id: 1, eje: 'Construcción de Paz y Territorio', nombre: 'Percepción de Espacio Seguro', meta: '95% de percepción positiva' },
-    { id: 5, proyecto_id: 1, eje: 'Construcción de Paz y Territorio', nombre: 'Resolución de Conflictos', meta: 'Reducción del 50% en incidentes' },
-    { id: 6, proyecto_id: 1, eje: 'Construcción de Paz y Territorio', nombre: 'Vínculo Intercultural', meta: '1 encuentro bimensual' },
-    { id: 7, proyecto_id: 1, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Tasa de Retención', meta: '85% de retención anual' },
-    { id: 8, proyecto_id: 1, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Desempeño Competitivo', meta: 'Mínimo 2 torneos anuales' },
-    { id: 9, proyecto_id: 1, eje: 'Permanencia y Excelencia Deportiva', nombre: 'Escalamiento Deportivo', meta: '2-3 jugadoras por ciclo' }
-];
-
 /**
- * Verifica si la BD tiene datos. Si está vacía, re-siembra todo.
- * Esto garantiza que los indicadores siempre estén disponibles,
- * incluso si el usuario tiene una versión antigua de la BD en caché.
+ * Verifica si la BD tiene los indicadores correctos. Si no, los re-siembra.
+ * Se llama siempre al iniciar la página de captura para garantizar datos frescos.
  */
 export async function ensureDataSeeded() {
-    const indicadores = await getAllData('indicadores');
-    if (indicadores.length > 0) return; // Ya hay datos, no hacer nada
+    if (!db) {
+        console.warn('ensureDataSeeded: BD no inicializada.');
+        return;
+    }
 
-    console.warn('BD sin datos de indicadores. Re-sembrando...');
+    const indicadores = await getAllData('indicadores');
+    console.log(`ensureDataSeeded: encontrados ${indicadores.length} indicadores.`);
+
+    if (indicadores.length >= INDICADORES_MAESTROS.length) {
+        console.log('Datos de indicadores OK.');
+        return;
+    }
+
+    console.warn(`BD con ${indicadores.length} indicadores (se esperan ${INDICADORES_MAESTROS.length}). Re-sembrando...`);
+
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(['usuarios', 'proyectos', 'indicadores'], 'readwrite');
+
         transaction.oncomplete = () => {
-            console.log('Re-siembra completada.');
+            console.log('Re-siembra completada exitosamente.');
             resolve();
         };
-        transaction.onerror = (e) => reject(e.target.error);
+        transaction.onerror = (e) => {
+            console.error('Error en re-siembra:', e.target.error);
+            reject(e.target.error);
+        };
 
         const userStore = transaction.objectStore('usuarios');
-        userStore.put({ id: 1, correo: 'admin@pazion.org', nombre: 'Admin PaZion', password: '123', rol: 'Administrador' });
-        userStore.put({ id: 2, correo: 'tecnico@pazion.org', nombre: 'Técnico Campo', password: '123', rol: 'Técnico de Campo' });
+        USUARIOS_MAESTROS.forEach(u => userStore.put(u));
 
-        transaction.objectStore('proyectos').put({
-            id: 1, nombre: 'Goles de Vida', eje: 'Integral',
-            meta_global: 100, activo: true,
-            descripcion: 'Programa insignia de la Fundación +PaZion para el liderazgo y paz.'
-        });
+        transaction.objectStore('proyectos').put(PROYECTO_MAESTRO);
 
         const indStore = transaction.objectStore('indicadores');
         INDICADORES_MAESTROS.forEach(i => indStore.put(i));
@@ -152,7 +150,18 @@ export async function ensureDataSeeded() {
 }
 
 /**
- * CRUD genérico: Guardar dato
+ * Expone la lista maestra de indicadores para uso directo (sin pasar por BD si hay problemas).
+ */
+export function getIndicadoresMaestros() {
+    return [...INDICADORES_MAESTROS];
+}
+
+// ============================================================
+// CRUD Genérico
+// ============================================================
+
+/**
+ * Guarda un dato en un store.
  */
 export async function addData(storeName, data) {
     return new Promise((resolve, reject) => {
@@ -165,7 +174,7 @@ export async function addData(storeName, data) {
 }
 
 /**
- * CRUD genérico: Obtener todos los datos de un store
+ * Obtiene todos los datos de un store.
  */
 export async function getAllData(storeName) {
     return new Promise((resolve, reject) => {
@@ -178,7 +187,7 @@ export async function getAllData(storeName) {
 }
 
 /**
- * CRUD genérico: Obtener dato por ID
+ * Obtiene un dato por ID.
  */
 export async function getDataById(storeName, id) {
     return new Promise((resolve, reject) => {
@@ -191,7 +200,7 @@ export async function getDataById(storeName, id) {
 }
 
 /**
- * CRUD genérico: Actualizar dato
+ * Actualiza un dato.
  */
 export async function updateData(storeName, data) {
     return new Promise((resolve, reject) => {
@@ -199,6 +208,24 @@ export async function updateData(storeName, data) {
         const store = transaction.objectStore(storeName);
         const request = store.put(data);
         request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
+
+/**
+ * Elimina la BD completa y recarga la página.
+ * Útil como herramienta de diagnóstico en la pantalla de administración.
+ */
+export async function resetDatabase() {
+    if (db) {
+        db.close();
+    }
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.deleteDatabase(DB_NAME);
+        request.onsuccess = () => {
+            console.log('Base de datos eliminada. Recargando...');
+            resolve();
+        };
         request.onerror = () => reject(request.error);
     });
 }

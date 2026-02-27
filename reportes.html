@@ -9,6 +9,50 @@
     <!-- jspdf and html2canvas for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        .progress-segment {
+            height: 8px;
+            border-radius: 4px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .progress-segment-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--purple-600), var(--purple-400));
+            border-radius: 4px;
+            transition: width 0.8s ease;
+        }
+
+        .ind-row-eje {
+            font-size: 11px;
+            color: var(--text-muted);
+            background: rgba(123, 53, 196, 0.08);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .logro-num {
+            font-weight: 800;
+            font-size: 16px;
+            background: linear-gradient(135deg, var(--purple-400), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--space-2xl);
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: var(--space-md);
+        }
+    </style>
 </head>
 
 <body>
@@ -22,20 +66,20 @@
                 <div class="flex justify-between items-center" style="margin-bottom: var(--space-xl);">
                     <div>
                         <h1 class="text-gradient">Generación de Reportes</h1>
-                        <p class="text-secondary">Consolidado institucional de indicadores</p>
+                        <p class="text-secondary">Consolidado institucional de indicadores y capturas de campo</p>
                     </div>
                     <button class="btn btn-primary" id="btnExportPDF">
                         <span>📄 Exportar PDF Institucional</span>
                     </button>
                 </div>
 
-                <!-- Filters -->
+                <!-- Filtros -->
                 <div class="card" style="margin-bottom: var(--space-xl);">
                     <div class="grid grid-3">
                         <div class="form-group">
                             <label class="form-label">Rango de Fechas</label>
                             <select id="filterDate" class="form-control">
-                                <option value="all">Siempre</option>
+                                <option value="all">Todo el período</option>
                                 <option value="month">Este Mes</option>
                                 <option value="quarter">Este Trimestre</option>
                             </select>
@@ -57,56 +101,80 @@
                     </div>
                 </div>
 
-                <!-- Report Content Area (for PDF export) -->
+                <!-- Área de Reporte (para PDF) -->
                 <div id="reportContent" class="card" style="padding: var(--space-2xl);">
+                    <!-- Encabezado Institucional -->
                     <div class="text-center" style="margin-bottom: var(--space-2xl);">
                         <img src="assets/img/logo.png" alt="+PaZion"
                             style="height: 60px; margin: 0 auto var(--space-md); filter: grayscale(1) brightness(2);"
                             onerror="this.src='https://placehold.co/150x60/0D0718/7B35C4?text=+PaZion'">
                         <h2 style="font-size: 24px; color: var(--text-primary);">Reporte Consolidado MEAL</h2>
                         <p class="text-muted">Fundación +PaZion / Goles de Vida</p>
-                        <div id="reportMeta" class="text-sm" style="margin-top: var(--space-sm);">Generado el: <span
-                                id="genDate"></span></div>
+                        <div id="reportMeta" class="text-sm" style="margin-top: var(--space-sm);">
+                            Generado el: <span id="genDate"></span>
+                        </div>
                     </div>
 
+                    <!-- KPIs Globales -->
+                    <div class="grid grid-4" style="margin-bottom: var(--space-2xl);">
+                        <div
+                            style="background: rgba(123,53,196,0.08); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center;">
+                            <div style="font-size: 28px; font-weight: 800; color: var(--purple-400);" id="kpiTotal">0
+                            </div>
+                            <div
+                                style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-top: 4px;">
+                                Total Capturas</div>
+                        </div>
+                        <div
+                            style="background: rgba(46,158,122,0.08); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center;">
+                            <div style="font-size: 28px; font-weight: 800; color: var(--green-400);" id="kpiAprobados">0
+                            </div>
+                            <div
+                                style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-top: 4px;">
+                                Aprobados</div>
+                        </div>
+                        <div
+                            style="background: rgba(245,158,11,0.08); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center;">
+                            <div style="font-size: 28px; font-weight: 800; color: var(--warning);" id="kpiPendientes">0
+                            </div>
+                            <div
+                                style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-top: 4px;">
+                                Pendientes</div>
+                        </div>
+                        <div
+                            style="background: rgba(59,130,246,0.08); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center;">
+                            <div style="font-size: 28px; font-weight: 800; color: var(--info);" id="kpiIndicadores">0
+                            </div>
+                            <div
+                                style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-top: 4px;">
+                                Indicadores con Datos</div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Indicadores -->
+                    <h3 style="margin-bottom: var(--space-lg);">Matriz de Indicadores</h3>
                     <div class="table-wrapper">
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Eje</th>
                                     <th>Indicador</th>
+                                    <th>Eje</th>
                                     <th>Meta (Año 1)</th>
-                                    <th>Logro Actual</th>
+                                    <th>Capturas</th>
+                                    <th>Aprobados</th>
                                     <th>Estado</th>
                                 </tr>
                             </thead>
                             <tbody id="reportTableBody">
-                                <!-- Se llena dinámicamente -->
+                                <!-- Dinámico -->
                             </tbody>
                         </table>
                     </div>
 
-                    <div style="margin-top: var(--space-2xl);">
-                        <h3 style="margin-bottom: var(--space-md);">Resumen de Impacto</h3>
-                        <div class="grid grid-3">
-                            <div
-                                style="background: rgba(123,53,196,0.05); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border);">
-                                <div class="text-xs uppercase fw-bold text-muted">Total Registros</div>
-                                <div id="totalReg" class="stat-value" style="font-size: 24px;">0</div>
-                            </div>
-                            <div
-                                style="background: rgba(46,158,122,0.05); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border);">
-                                <div class="text-xs uppercase fw-bold text-muted">Aprobados</div>
-                                <div id="totalApp" class="stat-value" style="font-size: 24px; color: var(--green-400);">
-                                    0</div>
-                            </div>
-                            <div
-                                style="background: rgba(239,68,68,0.05); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border);">
-                                <div class="text-xs uppercase fw-bold text-muted">Avance Promedio</div>
-                                <div id="avgProgress" class="stat-value"
-                                    style="font-size: 24px; color: var(--purple-400);">0%</div>
-                            </div>
-                        </div>
+                    <!-- Historial de Capturas Recientes -->
+                    <div id="recentCapturesSection" style="margin-top: var(--space-2xl);">
+                        <h3 style="margin-bottom: var(--space-lg);">Historial de Capturas en Campo</h3>
+                        <div id="capturesList"></div>
                     </div>
 
                     <div
@@ -121,7 +189,7 @@
 
     <script type="module">
         import { initUI, showToast } from './js/app.js?v=4';
-        import { initDB, getAllData } from './js/db.js?v=4';
+        import { initDB, getAllData, ensureDataSeeded } from './js/db.js?v=4';
 
         initUI();
 
@@ -130,6 +198,7 @@
 
         async function initReport() {
             await initDB();
+            await ensureDataSeeded();
             allCaptures = await getAllData('capturas');
             indicadores = await getAllData('indicadores');
 
@@ -143,53 +212,129 @@
                 ejeFilter.appendChild(opt);
             });
 
-            document.getElementById('genDate').textContent = new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('genDate').textContent = new Date().toLocaleDateString('es-ES', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
 
             applyFilters();
         }
 
+        function getFilteredCaptures() {
+            const dateVal = document.getElementById('filterDate').value;
+            const statusVal = document.getElementById('filterStatus').value;
+            const ejeVal = document.getElementById('filterEje').value;
+
+            let filtered = [...allCaptures];
+
+            // Filtro de estado
+            if (statusVal !== 'all') filtered = filtered.filter(c => c.estado === statusVal);
+
+            // Filtro de fecha
+            if (dateVal === 'month') {
+                const monthAgo = new Date();
+                monthAgo.setMonth(monthAgo.getMonth() - 1);
+                filtered = filtered.filter(c => new Date(c.fecha) >= monthAgo);
+            } else if (dateVal === 'quarter') {
+                const quarterAgo = new Date();
+                quarterAgo.setMonth(quarterAgo.getMonth() - 3);
+                filtered = filtered.filter(c => new Date(c.fecha) >= quarterAgo);
+            }
+
+            // Filtro de eje (por indicador)
+            if (ejeVal !== 'all') {
+                const indsInEje = indicadores.filter(i => i.eje === ejeVal).map(i => i.id);
+                filtered = filtered.filter(c => indsInEje.includes(c.indicador_id));
+            }
+
+            return filtered;
+        }
+
         function applyFilters() {
             const ejeVal = document.getElementById('filterEje').value;
-            const statusVal = document.getElementById('filterStatus').value;
+            const filteredCaptures = getFilteredCaptures();
 
             let filteredInds = indicadores;
             if (ejeVal !== 'all') filteredInds = indicadores.filter(i => i.eje === ejeVal);
 
+            // KPIs
+            const aprobados = filteredCaptures.filter(c => c.estado === 'Aprobado');
+            const pendientes = filteredCaptures.filter(c => c.estado === 'Pendiente');
+            const withData = new Set(filteredCaptures.map(c => c.indicador_id)).size;
+            document.getElementById('kpiTotal').textContent = filteredCaptures.length;
+            document.getElementById('kpiAprobados').textContent = aprobados.length;
+            document.getElementById('kpiPendientes').textContent = pendientes.length;
+            document.getElementById('kpiIndicadores').textContent = withData;
+
+            // Tabla de indicadores
             const tbody = document.getElementById('reportTableBody');
-            let totalLogro = 0;
-            let approvedCount = 0;
-
             tbody.innerHTML = filteredInds.map(ind => {
-                const caps = allCaptures.filter(c => c.indicador_id === ind.id);
-                const approved = caps.filter(c => c.estado === 'Aprobado');
-
-                // Simulación de cálculo de logro para la demo
-                const logro = approved.length > 0 ? (Math.random() * 20 + 70).toFixed(1) + '%' : '0%';
-                if (approved.length > 0) {
-                    totalLogro += parseFloat(logro);
-                    approvedCount++;
-                }
-
+                const caps = filteredCaptures.filter(c => c.indicador_id === ind.id);
+                const app = caps.filter(c => c.estado === 'Aprobado');
+                const tieneDatos = caps.length > 0;
                 return `
                     <tr>
-                        <td><span class="text-xs text-muted">${ind.eje}</span></td>
                         <td><strong>${ind.nombre}</strong></td>
+                        <td><span class="text-xs text-muted">${ind.eje}</span></td>
                         <td class="text-sm">${ind.meta}</td>
-                        <td><span class="text-gradient fw-bold">${logro}</span></td>
-                        <td><span class="badge ${approved.length > 0 ? 'badge-success' : 'badge-warning'}">${approved.length > 0 ? 'Con Datos' : 'Sin Datos'}</span></td>
+                        <td class="text-center"><strong>${caps.length}</strong></td>
+                        <td class="text-center"><span style="color: var(--green-400); font-weight: 700;">${app.length}</span></td>
+                        <td>
+                            <span class="badge ${tieneDatos ? (app.length > 0 ? 'badge-success' : 'badge-warning') : ''}">
+                                ${tieneDatos ? (app.length > 0 ? `✅ ${app.length} Aprobado${app.length > 1 ? 's' : ''}` : '⏳ Pendiente Revisión') : '—Sin Registros'}
+                            </span>
+                        </td>
                     </tr>
                 `;
             }).join('');
 
-            // Stats
-            document.getElementById('totalReg').textContent = allCaptures.length;
-            document.getElementById('totalApp').textContent = allCaptures.filter(c => c.estado === 'Aprobado').length;
-            document.getElementById('avgProgress').textContent = approvedCount > 0 ? (totalLogro / approvedCount).toFixed(1) + '%' : '0%';
+            // Historial de capturas recientes
+            const capturesList = document.getElementById('capturesList');
+            if (filteredCaptures.length === 0) {
+                capturesList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay capturas con los filtros seleccionados.</p>
+                        <p class="text-sm">Cree una nueva captura desde la sección <a href="captura.html" class="text-gradient fw-600">Captura de Datos</a>.</p>
+                    </div>
+                `;
+            } else {
+                const recent = filteredCaptures.slice(-10).reverse();
+                capturesList.innerHTML = `
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Técnico</th>
+                                    <th>Indicador</th>
+                                    <th>Valor</th>
+                                    <th>Fecha</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${recent.map(c => {
+                    const ind = indicadores.find(i => i.id === c.indicador_id);
+                    return `
+                                        <tr>
+                                            <td>${c.usuario_nombre || '—'}</td>
+                                            <td>${ind ? ind.nombre : 'Desconocido'}</td>
+                                            <td><strong>${c.valor}</strong></td>
+                                            <td class="text-sm text-muted">${new Date(c.fecha).toLocaleDateString('es-ES')}</td>
+                                            <td><span class="badge ${c.estado === 'Aprobado' ? 'badge-success' : c.estado === 'Rechazado' ? 'badge-danger' : 'badge-warning'}">${c.estado}</span></td>
+                                        </tr>
+                                    `;
+                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
         }
 
-        // Eventos
+        // Eventos de filtros
         document.getElementById('filterEje').addEventListener('change', applyFilters);
         document.getElementById('filterStatus').addEventListener('change', applyFilters);
+        document.getElementById('filterDate').addEventListener('change', applyFilters);
 
         // Exportar PDF
         document.getElementById('btnExportPDF').addEventListener('click', async () => {
@@ -201,10 +346,10 @@
 
             html2canvas(content, {
                 backgroundColor: '#0D0718',
-                scale: 2, // Mayor calidad
+                scale: 2,
             }).then(canvas => {
                 const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 595.28; // A4 pt width
+                const imgWidth = 595.28;
                 const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
                 doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
