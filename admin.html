@@ -201,6 +201,8 @@
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Proyectos Activos</h3>
+                            <button class="btn btn-primary btn-sm" onclick="openProjectModal()">➕ Agregar
+                                Proyecto</button>
                         </div>
                         <div class="table-wrapper">
                             <table>
@@ -211,6 +213,7 @@
                                         <th>Meta Global</th>
                                         <th>Descripción</th>
                                         <th>Estado</th>
+                                        <th>Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="projectsAdmin">
@@ -308,6 +311,48 @@
         </div>
     </div>
 
+    <!-- Modal de Proyecto -->
+    <div id="projectModal" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="projectModalTitle">Agregar Proyecto</h2>
+                <button class="modal-close" onclick="closeProjectModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editProjectId">
+                <div class="form-group">
+                    <label class="form-label">Nombre del Proyecto *</label>
+                    <input type="text" id="projectName" class="form-control"
+                        placeholder="Ej: Goles de Vida Comunitario">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Eje Estratégico *</label>
+                    <input type="text" id="projectAxis" class="form-control" placeholder="Ej: Múltiples">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Meta Global (%) *</label>
+                    <input type="number" id="projectGoal" class="form-control" placeholder="100">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Descripción</label>
+                    <textarea id="projectDesc" class="form-control"
+                        placeholder="Breve descripción del proyecto"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estado</label>
+                    <select id="projectActive" class="form-control">
+                        <option value="true">Activo</option>
+                        <option value="false">Inactivo</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-ghost" onclick="closeProjectModal()">Cancelar</button>
+                <button class="btn btn-primary" onclick="saveProject()">💾 Guardar Proyecto</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initUI, showToast } from './js/app.js?v=8';
         import { initDB, getAllData, addData, updateData, ensureDataSeeded } from './js/db.js?v=8';
@@ -391,7 +436,10 @@
                     <td>${p.eje}</td>
                     <td>${p.meta_global}%</td>
                     <td class="text-sm text-muted">${p.descripcion || '—'}</td>
-                    <td><span class="badge badge-success">${p.activo ? 'Activo' : 'Inactivo'}</span></td>
+                    <td><span class="badge ${p.activo ? 'badge-success' : 'badge-warning'}">${p.activo ? 'Activo' : 'Inactivo'}</span></td>
+                    <td>
+                        <button class="btn btn-ghost btn-sm" onclick="window.editProject(${p.id})">✏️ Editar</button>
+                    </td>
                 </tr>
             `).join('');
         }
@@ -460,6 +508,67 @@
             } catch (err) {
                 console.error(err);
                 showToast('Error: el correo puede estar duplicado', 'error');
+            }
+        };
+
+        // Modal Proyectos
+        window.openProjectModal = () => {
+            document.getElementById('projectModalTitle').textContent = 'Agregar Proyecto';
+            document.getElementById('editProjectId').value = '';
+            document.getElementById('projectName').value = '';
+            document.getElementById('projectAxis').value = '';
+            document.getElementById('projectGoal').value = '100';
+            document.getElementById('projectDesc').value = '';
+            document.getElementById('projectActive').value = 'true';
+            document.getElementById('projectModal').classList.remove('hidden');
+        };
+
+        window.editProject = (id) => {
+            const project = allProjects.find(p => p.id === id);
+            if (!project) return;
+            document.getElementById('projectModalTitle').textContent = 'Editar Proyecto';
+            document.getElementById('editProjectId').value = project.id;
+            document.getElementById('projectName').value = project.nombre;
+            document.getElementById('projectAxis').value = project.eje;
+            document.getElementById('projectGoal').value = project.meta_global;
+            document.getElementById('projectDesc').value = project.descripcion || '';
+            document.getElementById('projectActive').value = project.activo ? 'true' : 'false';
+            document.getElementById('projectModal').classList.remove('hidden');
+        };
+
+        window.closeProjectModal = () => {
+            document.getElementById('projectModal').classList.add('hidden');
+        };
+
+        window.saveProject = async () => {
+            const id = document.getElementById('editProjectId').value;
+            const nombre = document.getElementById('projectName').value.trim();
+            const eje = document.getElementById('projectAxis').value.trim();
+            const meta_global = parseInt(document.getElementById('projectGoal').value) || 100;
+            const descripcion = document.getElementById('projectDesc').value.trim();
+            const activo = document.getElementById('projectActive').value === 'true';
+
+            if (!nombre || !eje) {
+                showToast('Nombre y Eje son requeridos', 'error');
+                return;
+            }
+
+            const projectData = { nombre, eje, meta_global, descripcion, activo };
+
+            try {
+                if (id) {
+                    await updateData('proyectos', { id: parseInt(id), ...projectData });
+                    showToast('Proyecto actualizado correctamente', 'success');
+                } else {
+                    await addData('proyectos', projectData);
+                    showToast('Proyecto creado correctamente', 'success');
+                }
+                closeProjectModal();
+                allProjects = await getAllData('proyectos');
+                renderProjects();
+            } catch (err) {
+                console.error(err);
+                showToast('Error al guardar el proyecto', 'error');
             }
         };
 
