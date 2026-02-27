@@ -428,6 +428,7 @@ ul, ol { list-style: none; }
   background: var(--grad-card);
   opacity: 0;
   transition: opacity var(--transition);
+  pointer-events: none;
 }
 
 .card:hover::before { opacity: 1; }
