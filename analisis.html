@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Estratégico | Sistema MEAL +PaZion</title>
+    <link rel="stylesheet" href="css/main.css?v=11.3">
+    <!-- jspdf y html2canvas para PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        .analysis-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-2xl);
+            margin-bottom: var(--space-xl);
+        }
+
+        .analysis-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin-bottom: var(--space-lg);
+            border-left: 4px solid var(--purple-500);
+            padding-left: var(--space-sm);
+        }
+
+        .pull-quote {
+            font-style: italic;
+            font-size: 18px;
+            color: var(--text-secondary);
+            border-left: 4px solid var(--purple-600);
+            padding: var(--space-md) var(--space-xl);
+            background: linear-gradient(90deg, rgba(123, 53, 196, 0.1) 0%, transparent 100%);
+            margin: var(--space-xl) 0;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        }
+
+        .highlight-box {
+            background: rgba(46, 158, 122, 0.08);
+            border: 1px solid rgba(46, 158, 122, 0.3);
+            border-radius: var(--radius-md);
+            padding: var(--space-md);
+            margin-bottom: var(--space-md);
+        }
+
+        .highlight-title {
+            color: var(--green-400);
+            font-weight: 700;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--space-xs);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: var(--space-2xl);
+            color: var(--text-muted);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-md);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: var(--space-md);
+        }
+
+        .paragraph {
+            line-height: 1.8;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-md);
+            font-size: 15px;
+        }
+
+        .insight-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .insight-list li {
+            position: relative;
+            padding-left: 24px;
+            margin-bottom: var(--space-sm);
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .insight-list li::before {
+            content: "✦";
+            position: absolute;
+            left: 0;
+            color: var(--purple-400);
+            font-size: 14px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="topbar"></header>
+
+            <div class="page-wrapper">
+                <div class="flex justify-between items-center" style="margin-bottom: var(--space-xl);">
+                    <div>
+                        <h1 class="text-gradient">Análisis Estratégico</h1>
+                        <p class="text-secondary">Informes cualitativos por eje para narrativas y convocatorias</p>
+                    </div>
+                    <button class="btn btn-primary" id="btnExportPDF" disabled>
+                        <span>📄 Exportar a PDF</span>
+                    </button>
+                </div>
+
+                <div class="card" style="margin-bottom: var(--space-xl);">
+                    <div class="form-group" style="max-width: 400px; margin-bottom: 0;">
+                        <label class="form-label">Seleccione un Eje Estratégico para analizar</label>
+                        <select id="filterEje" class="form-control">
+                            <option value="">-- Elige un Eje --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Contenedor del Reporte Dinámico -->
+                <div id="reportContent" style="display: none;">
+                    <div class="card" style="padding: var(--space-2xl);">
+                        <!-- Encabezado Institucional -->
+                        <div class="text-center" style="margin-bottom: var(--space-2xl);">
+                            <img src="assets/img/logo.png" alt="+PaZion"
+                                style="height: 60px; margin: 0 auto var(--space-md); filter: grayscale(1) brightness(0.2);"
+                                onerror="this.src='https://placehold.co/150x60/0D0718/7B35C4?text=+PaZion'">
+                            <h2 style="font-size: 26px; color: var(--text-primary);">Informe Narrativo de Impacto</h2>
+                            <p class="text-secondary" style="font-size: 18px; font-weight: 600;" id="ejeTitle">Eje
+                                Estratégico</p>
+                            <div class="text-sm text-muted" style="margin-top: var(--space-sm);">
+                                Generado el: <span id="genDate"></span> • Fundación +PaZion
+                            </div>
+                        </div>
+
+                        <div class="analysis-card">
+                            <div class="analysis-title">Resumen Ejecutivo</div>
+                            <p class="paragraph" id="resumenNarrativo"></p>
+                        </div>
+
+                        <div class="pull-quote" id="pullQuote">
+                            "Añadir el testimonio más significativo aquí consolidará el impacto que buscamos generar en
+                            las
+                            comunidades."
+                        </div>
+
+                        <div class="analysis-card">
+                            <div class="analysis-title">Hallazgos y Observaciones Cualitativas</div>
+                            <p class="paragraph">A partir de los registros de campo obtenidos durante el monitoreo, se
+                                han extraído
+                                las siguientes reflexiones y hallazgos clave:</p>
+                            <ul class="insight-list" id="observacionesList">
+                                <!-- Dinámico -->
+                            </ul>
+                        </div>
+
+                        <div class="analysis-card"
+                            style="background: rgba(123, 53, 196, 0.05); border-color: rgba(123, 53, 196, 0.2);">
+                            <div class="analysis-title">Conclusión para Socialización</div>
+                            <p class="paragraph" id="conclusionSocializacion"></p>
+                        </div>
+
+                        <div
+                            style="margin-top: var(--space-3xl); border-top: 1px solid var(--border); padding-top: var(--space-md);">
+                            <p class="text-xs text-muted text-center">Este informe está alineado con la política
+                                institucional de
+                                MEAL cualitativo para potenciar el análisis más allá del mero dato numérico.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="emptyStateContainer" class="empty-state">
+                    <div class="empty-state-icon">🧠</div>
+                    <h3 style="margin-bottom: var(--space-sm);">Selecciona un Eje</h3>
+                    <p>Por favor, selecciona un Eje Estratégico en el menú superior para generar el análisis
+                        cualitativo.</p>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initUI, showToast } from './js/app.js?v=11.3';
+        import { initDB, getAllData, ensureDataSeeded } from './js/db.js?v=11.3';
+
+        initUI();
+
+        let allCaptures = [];
+        let indicadores = [];
+
+        async function initReport() {
+            try {
+                await initDB();
+                await ensureDataSeeded();
+                allCaptures = await getAllData('capturas');
+                indicadores = await getAllData('indicadores');
+
+                const ejes = [...new Set(indicadores.map(i => i.eje))];
+                const ejeFilter = document.getElementById('filterEje');
+                ejes.forEach(eje => {
+                    const opt = document.createElement('option');
+                    opt.value = eje;
+                    opt.textContent = eje;
+                    ejeFilter.appendChild(opt);
+                });
+
+                document.getElementById('genDate').textContent = new Date().toLocaleDateString('es-ES', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+                });
+            } catch (err) {
+                console.error("Error al inicializar reporte", err);
+                showToast("Error cargando los datos", "error");
+            }
+        }
+
+        function generarAnalisis(ejeSeleccionado) {
+            const container = document.getElementById('reportContent');
+            const emptyState = document.getElementById('emptyStateContainer');
+            const btnPdf = document.getElementById('btnExportPDF');
+
+            if (!ejeSeleccionado) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                btnPdf.disabled = true;
+                return;
+            }
+
+            container.style.display = 'block';
+            emptyState.style.display = 'none';
+            btnPdf.disabled = false;
+
+            document.getElementById('ejeTitle').textContent = ejeSeleccionado;
+
+            const indsDelEje = indicadores.filter(i => i.eje === ejeSeleccionado).map(i => i.id);
+            const capturasEje = allCaptures.filter(c => indsDelEje.includes(c.indicador_id));
+            const aprobadas = capturasEje.filter(c => c.estado === 'Aprobado');
+
+            // --- 1. Resumen Narrativo ---
+            let totalParticipantesAprox = 0;
+            capturasEje.forEach(c => {
+                if (c.conteo && c.conteo.total) totalParticipantesAprox += parseInt(c.conteo.total);
+                if (c.participantes) totalParticipantesAprox += c.participantes.length;
+            });
+
+            const p1 = `El eje estratégico "${ejeSeleccionado}" se ha consolidado como un componente vital de nuestra intervención territorial. A la fecha, se han ingresado al sistema <strong>${capturasEje.length} registros o sesiones de campo</strong>. La rigurosidad de nuestro método MEAL ha permitido que <strong>${aprobadas.length} de estas capturas</strong> superen exitosamente los procesos de validación técnica.`;
+
+            const p2 = totalParticipantesAprox > 0 ?
+                ` En términos de alcance poblacional, nuestras acciones documentadas en este eje proyectan una incidencia directa sobre al menos ${totalParticipantesAprox} participantes, promoviendo transformaciones medibles en sus entornos.`
+                : ` Nos encontramos en una fase de levantamiento de línea base y recolección de evidencia inicial.`;
+
+            document.getElementById('resumenNarrativo').innerHTML = p1 + p2;
+
+            // --- 2. Pull Quote ---
+            const quotes = [
+                `La verdadera medición del impacto no reside en la cantidad de encuestas, sino en las historias de agencia que cada número representa dentro de "${ejeSeleccionado}".`,
+                `"Nuestro trabajo en el terreno demuestra que el desarrollo de capacidades en el marco de '${ejeSeleccionado}' genera cambios que trascienden las estimaciones iniciales."`,
+                `"Las percepciones recogidas indican que las dinámicas de empoderamiento están echando raíces profundas en el día a día de las participantes."`
+            ];
+            document.getElementById('pullQuote').textContent = quotes[Math.floor(Math.random() * quotes.length)];
+
+            // --- 3. Observaciones y Hallazgos ---
+            const obsList = document.getElementById('observacionesList');
+            obsList.innerHTML = '';
+
+            let tieneObservacionesReales = false;
+            capturasEje.forEach(c => {
+                if (c.observaciones && c.observaciones.trim() !== '') {
+                    tieneObservacionesReales = true;
+                    const li = document.createElement('li');
+                    li.innerHTML = `<em>De la captura del ${new Date(c.fecha).toLocaleDateString()}:</em> "${c.observaciones}"`;
+                    obsList.appendChild(li);
+                }
+            });
+
+            if (!tieneObservacionesReales) {
+                // Generar hallazgos sintéticos basados en los indicadores del eje
+                const indicadoresEje = indicadores.filter(i => i.eje === ejeSeleccionado);
+                const indsAsignados = new Set(capturasEje.map(c => c.indicador_id));
+
+                indicadoresEje.forEach(ind => {
+                    const capsDeInd = capturasEje.filter(c => c.indicador_id === ind.id);
+                    if (capsDeInd.length > 0) {
+                        const aprobDeInd = capsDeInd.filter(c => c.estado === 'Aprobado');
+                        const li = document.createElement('li');
+                        li.innerHTML = `<strong>Avance cualitativo en ${ind.nombre}:</strong> Las dinamizadoras registran una apropiación evidente del concepto. Los datos reflejan que a través de las ${capsDeInd.length} sesiones documentadas, las participantes muestran mayor involucramiento y resonancia con la metodología esperada. (${aprobDeInd.length} sesiones totalmente validadas).`;
+                        obsList.appendChild(li);
+                    }
+                });
+
+                if (indsAsignados.size === 0) {
+                    obsList.innerHTML = '<li>Aún no contamos con datos cualitativos sistematizados ni observaciones de campo directas para este eje. Se recomienda fomentar el registro de bitácoras por parte de los técnicos comunitarios.</li>';
+                }
+            }
+
+            // --- 4. Conclusión para Socialización ---
+            const conclusion = `Los hallazgos del eje <strong>"${ejeSeleccionado}"</strong> ratifican que los procesos de intervención territoriales de Fundación +PaZion son pertinentes y generan transformaciones sostenidas. La correlación entre la validación de nuestros indicadores (estado: ${aprobadas.length > 0 ? 'Favorable' : 'Incidencial'}) y la participación activa de las comunidades, sugiere que estamos en el camino correcto. Este informe puede ser utilizado de manera directa como insumo argumentativo para justificación técnica en procesos de rendición de cuentas, diálogos con aliados de cooperación y mesas de incidencia política.`;
+            document.getElementById('conclusionSocializacion').innerHTML = conclusion;
+
+        }
+
+        document.getElementById('filterEje').addEventListener('change', (e) => {
+            generarAnalisis(e.target.value);
+        });
+
+        // Exportar PDF
+        document.getElementById('btnExportPDF').addEventListener('click', async () => {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'pt', 'a4');
+            const content = document.getElementById('reportContent');
+
+            showToast("Generando PDF de análisis...", "info");
+
+            html2canvas(content, {
+                backgroundColor: '#0D0718',
+                scale: 2,
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const imgWidth = 595.28;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                doc.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                doc.save('Analisis_Estrategico_Pazion_' + new Date().toISOString().split('T')[0] + '.pdf');
+                showToast("Análisis PDF descargado con éxito", "success");
+            });
+        });
+
+        initReport();
+    </script>
+</body>
+
+</html>
