@@ -387,10 +387,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initUI();
 
-            // --- Lógica del Reproductor Simulado (DEMO) ---
-            // Ya que los navegadores bloquean sistemáticamente audios externos y el Iframe falló en tu entorno,
-            // hemos vuelto al diseño hermoso original y programado un "simulador" que muestra 
-            // visualmente cómo funcionará cuando el archivo MP3 sea alojado localmente.
+            // --- Lógica del Reproductor con Sintetizador de Voz Nativo ---
             const btnPlayPause = document.getElementById('btnPlayPause');
             const progressBar = document.getElementById('progressBar');
             const progressFill = document.getElementById('progressFill');
@@ -398,8 +395,24 @@
 
             let isPlaying = false;
             let currentSeconds = 0;
-            const totalDuration = 330; // 5 minutos 30 segundos
-            let intervalId = null;
+            const totalDuration = 180; // 3 minutos aprox del guion
+            let progressInterval = null;
+            let currentUtterance = null;
+
+            // Textos del podcast
+            const podcastScript = [
+                { time: 0, text: "Bienvenido a la Guía de Inicio de la Matriz de Monitoreo Mil. En este episodio de Voces de Pasión, aprenderemos a utilizar el sistema de captura de datos." },
+                { time: 15, text: "Paso uno: Seleccionando el Eje y el Indicador. Para comenzar, navega por los ejes estratégicos, como Empoderamiento, Construcción de Paz o Permanencia Deportiva." },
+                { time: 30, text: "Asegúrate de seleccionar el indicador correcto para la sesión del día. De esta manera, mantendremos la información organizada." },
+                { time: 45, text: "Paso dos: Tipos de Encuestas. En el sistema encontrarás encuestas de escala del uno al diez, y encuestas de respuesta directa de Sí o No." },
+                { time: 65, text: "También podrás registrar conteos rápidos para asistencia a torneos o encuentros interculturales." },
+                { time: 80, text: "Paso tres: Evidencia y Firma. No olvides activar tu GPS para validar la ubicación. Toma la foto de la asistencia y solicita la firma digital en el lienzo." },
+                { time: 100, text: "Muy importante: Trabajando sin internet. Si fuiste a una comunidad sin señal, no te preocupes." },
+                { time: 115, text: "El sistema guarda todos los formularios internamente en tu dispositivo móvil. Cuando regreses a la oficina y tengas internet, simplemente presiona el botón Sincronizar en la parte superior." },
+                { time: 135, text: "Gracias por tu excelente labor técnica en terreno. ¡Sigamos marcando Goles de Vida!" }
+            ];
+
+            let scriptIndex = 0;
 
             function formatTime(totalSeconds) {
                 const mins = Math.floor(totalSeconds / 60);
@@ -413,34 +426,77 @@
                 progressFill.style.width = `${percent}%`;
             }
 
-            function playSimulatedAudio() {
-                if (currentSeconds >= totalDuration) currentSeconds = 0;
+            function getFemaleSpanishVoice() {
+                const voices = window.speechSynthesis.getVoices();
+                // Buscar voz en español femenina (por heurística de nombre o lang)
+                let esVoices = voices.filter(v => v.lang.startsWith('es'));
+                if (esVoices.length === 0) return null;
 
-                intervalId = setInterval(() => {
-                    currentSeconds += 1; // Adelanta 1 segundo
-                    updatePlayerUI();
+                // Intentar encontrar voces famosas femeninas (Paulina, Monica, Sabina, etc en OS)
+                let female = esVoices.find(v => v.name.includes('Monica') || v.name.includes('Paulina') || v.name.includes('Paulina') || v.name.includes('Luciana') || v.name.includes('Margarita'));
+                return female || esVoices[0]; // Retorna femenina o la primera en español
+            }
 
-                    if (currentSeconds >= totalDuration) {
-                        pauseSimulatedAudio();
+            function speakNext() {
+                if (scriptIndex >= podcastScript.length || !isPlaying) return;
+
+                const part = podcastScript[scriptIndex];
+                currentUtterance = new SpeechSynthesisUtterance(part.text);
+
+                const voice = getFemaleSpanishVoice();
+                if (voice) currentUtterance.voice = voice;
+                currentUtterance.lang = 'es-ES';
+                currentUtterance.rate = 0.95; // Un poco más lento, modo locutora
+                currentUtterance.pitch = 1.1; // Tono más agudo
+
+                currentUtterance.onend = () => {
+                    scriptIndex++;
+                    speakNext();
+                };
+
+                window.speechSynthesis.speak(currentUtterance);
+            }
+
+            function playPodcast() {
+                // Prevenir múltiples instancias
+                window.speechSynthesis.cancel();
+
+                // Asegurarse de que el script arranca de cero si terminó
+                if (currentSeconds >= totalDuration) {
+                    currentSeconds = 0;
+                    scriptIndex = 0;
+                }
+
+                isPlaying = true;
+                btnPlayPause.innerHTML = '⏸';
+
+                // Iniciar motor de voz
+                speakNext();
+
+                // Fake progress visual
+                progressInterval = setInterval(() => {
+                    if (currentSeconds < totalDuration && isPlaying) {
+                        currentSeconds++;
+                        updatePlayerUI();
+                    } else if (currentSeconds >= totalDuration) {
+                        pausePodcast();
                         currentSeconds = 0;
                         updatePlayerUI();
                     }
-                }, 1000); // Se actualiza cada 1000ms (1 segundo real)
-
-                btnPlayPause.innerHTML = '⏸';
-                isPlaying = true;
+                }, 1000);
             }
 
-            function pauseSimulatedAudio() {
-                clearInterval(intervalId);
-                btnPlayPause.innerHTML = '▶';
+            function pausePodcast() {
                 isPlaying = false;
+                btnPlayPause.innerHTML = '▶';
+                clearInterval(progressInterval);
+                window.speechSynthesis.pause(); // Pausar voz en progreso
+                window.speechSynthesis.cancel(); // Matar pronunciación para evitar atascos
             }
 
-            // Alternar Play/Pause
             btnPlayPause.addEventListener('click', () => {
-                if (isPlaying) pauseSimulatedAudio();
-                else playSimulatedAudio();
+                if (isPlaying) pausePodcast();
+                else playPodcast();
             });
 
             // Adelantar haciendo click en la barra
@@ -448,20 +504,41 @@
                 const rect = progressBar.getBoundingClientRect();
                 const pos = (e.clientX - rect.left) / rect.width;
                 currentSeconds = Math.floor(pos * totalDuration);
+
+                // Mapear segundos a índice del script
+                let newIndex = 0;
+                for (let i = podcastScript.length - 1; i >= 0; i--) {
+                    if (currentSeconds >= podcastScript[i].time) {
+                        newIndex = i;
+                        break;
+                    }
+                }
+                scriptIndex = newIndex;
+
                 updatePlayerUI();
+                if (isPlaying) {
+                    pausePodcast();
+                    playPodcast(); // Reinicia la voz desde el nuevo índice
+                }
             });
 
-            // Clic en los timestamps de las notas (salta al tiempo específico)
+            // Clic en los timestamps de las notas (salta al tiempo específico del diálogo)
             document.querySelectorAll('.timestamp').forEach(badge => {
                 badge.addEventListener('click', () => {
                     const timeStr = badge.dataset.time;
                     if (timeStr) {
                         currentSeconds = parseInt(timeStr, 10);
+
+                        // Encontrar índice apropiado en script
+                        scriptIndex = podcastScript.findIndex(part => part.time === currentSeconds);
+                        if (scriptIndex === -1) scriptIndex = 0;
+
                         updatePlayerUI();
 
-                        if (!isPlaying) playSimulatedAudio();
+                        if (isPlaying) pausePodcast();
+                        playPodcast();
 
-                        // Animación interactiva de la nota conectada
+                        // Animación interactiva de la nota
                         const noteContent = badge.nextElementSibling;
                         noteContent.style.transition = 'background 0.3s';
                         noteContent.style.background = 'rgba(123, 53, 196, 0.1)';
@@ -473,6 +550,11 @@
                     }
                 });
             });
+
+            // Precargar voces
+            window.speechSynthesis.onvoiceschanged = () => {
+                getFemaleSpanishVoice();
+            };
         });
     </script>
 </body>
