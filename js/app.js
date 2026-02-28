@@ -22,7 +22,7 @@ export function initUI() {
  * Función nuclear para limpiar cachés rebeldes y service workers antiguos.
  */
 async function forceSystemUpdate() {
-  const CURRENT_VER = 'v12-analisis';
+  const CURRENT_VER = 'v13-responsive';
   if (localStorage.getItem('pazion_system_version') === CURRENT_VER) return;
 
   console.warn('Detectada versión antigua. Iniciando limpieza profunda de caché...');
@@ -116,7 +116,12 @@ function renderTopbar(user) {
   const pageTitle = document.title.split('|')[0].trim();
 
   topbar.innerHTML = `
-    <div class="topbar-title">${pageTitle}</div>
+    <div class="flex items-center gap-sm">
+      <button id="mobileMenuBtn" class="btn btn-ghost btn-sm btn-icon" style="display: none;">
+        <span style="font-size: 20px;">☰</span>
+      </button>
+      <div class="topbar-title">${pageTitle}</div>
+    </div>
     <div class="topbar-actions">
       <div id="gpsStatus" class="flex items-center gap-sm">
         <span class="text-sm text-muted">GPS</span>
@@ -128,6 +133,51 @@ function renderTopbar(user) {
       </button>
     </div>
   `;
+
+  // Mobile menu logic
+  const mobileBtn = document.getElementById('mobileMenuBtn');
+  const sidebar = document.querySelector('.sidebar');
+
+  // Create backdrop if not exists
+  let backdrop = document.querySelector('.sidebar-backdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.className = 'sidebar-backdrop';
+    document.body.appendChild(backdrop);
+    backdrop.style.display = 'none'; // Ensure it's hidden by default
+  }
+
+  if (window.innerWidth <= 768) {
+    mobileBtn.style.display = 'block';
+  }
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth <= 768) {
+      mobileBtn.style.display = 'block';
+    } else {
+      mobileBtn.style.display = 'none';
+      if (sidebar) sidebar.classList.remove('open');
+      if (backdrop) backdrop.style.display = 'none';
+    }
+  });
+
+  const toggleSidebar = () => {
+    if (sidebar) {
+      const isOpen = sidebar.classList.toggle('open');
+      if (isOpen) backdrop.style.display = 'block';
+      else backdrop.style.display = 'none';
+    }
+  };
+
+  mobileBtn.addEventListener('click', toggleSidebar);
+  backdrop.addEventListener('click', toggleSidebar);
+
+  // Close sidebar when clicking links on mobile
+  sidebar.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) toggleSidebar();
+    });
+  });
 }
 
 /**

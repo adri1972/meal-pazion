@@ -1500,5 +1500,21 @@ tbody td:first-child {
 
   .topbar {
     padding: 0 var(--space-md);
+    justify-content: space-between;
+  }
+
+  /* Sidebar Backdrop */
+  .sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 95;
+    backdrop-filter: blur(2px);
+    animation: fadeIn 0.2s ease;
+  }
+
+  .sidebar.open+.sidebar-backdrop {
+    display: block;
   }
 }
