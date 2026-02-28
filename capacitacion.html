@@ -425,16 +425,23 @@
             if (isPlaying) {
                 audio.pause();
                 btnPlayPause.innerHTML = '▶';
+                isPlaying = false;
             } else {
                 // Forzar volumen por si el navegador lo bloqueó
                 audio.volume = volumeSlider.value;
-                audio.play().catch(e => {
+                btnPlayPause.innerHTML = '⏳'; // Loading state
+
+                audio.play().then(() => {
+                    btnPlayPause.innerHTML = '⏸';
+                    isPlaying = true;
+                    console.log("Audio playing successfully");
+                }).catch(e => {
                     console.error("Error al reproducir audio:", e);
-                    alert("Tu navegador bloqueó el audio automático. Por favor, verifica los permisos de sonido.");
+                    btnPlayPause.innerHTML = '⚠️';
+                    alert("Error reproduciendo el audio: " + e.message + "\nIntenta revisar la conexión a internet o los permisos del navegador.");
+                    isPlaying = false;
                 });
-                btnPlayPause.innerHTML = '⏸';
             }
-            isPlaying = !isPlaying;
         }
 
         btnPlayPause.addEventListener('click', togglePlay);
