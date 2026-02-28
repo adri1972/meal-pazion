@@ -4,7 +4,7 @@
  * Permite el funcionamiento offline cacheando los assets esenciales.
  */
 
-const CACHE_NAME = 'pazion-meal-v15-ultrasharp';
+const CACHE_NAME = 'pazion-meal-v16-super-crisp';
 const ASSETS = [
     './',
     './index.html',

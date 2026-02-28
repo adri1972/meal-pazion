@@ -207,17 +207,20 @@ ol {
 .sidebar {
   width: var(--sidebar-width);
   background: #FFFFFF !important;
-  border-right: 1px solid var(--border);
+  border-right: 1px solid #E5E7EB;
   position: fixed;
   top: 0;
   left: 0;
   bottom: 0;
   display: flex;
   flex-direction: column;
-  z-index: 1000;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  z-index: 2000;
+  /* Super high priority */
+  box-shadow: 15px 0 50px rgba(0, 0, 0, 0.2);
   overflow-y: auto;
-  transition: transform var(--transition-slow);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  opacity: 1 !important;
+  filter: none !important;
 }
 
 .sidebar-brand {
@@ -275,28 +278,32 @@ ol {
 .nav-item {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  padding: 10px var(--space-md);
+  gap: var(--space-md);
+  padding: 14px var(--space-md);
   border-radius: var(--radius-md);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
-  transition: all var(--transition);
-  position: relative;
-  margin-bottom: 2px;
-  cursor: pointer;
+  font-size: 15px;
   font-weight: 600;
+  color: #111827 !important;
+  /* Jet Black */
+  transition: all 0.2s ease;
+  position: relative;
+  margin-bottom: 4px;
+  cursor: pointer;
+  border: 1px solid transparent;
 }
 
 .nav-item:hover {
-  background: var(--bg-card-hover);
-  color: var(--text-primary);
+  background: #F9FAFB;
 }
 
 .nav-item.active {
-  background: linear-gradient(135deg, rgba(123, 53, 196, 0.25), rgba(46, 158, 122, 0.15));
-  color: var(--text-primary);
-  border: 1px solid var(--border-accent);
+  background: #F3F4F6 !important;
+  color: var(--purple-700) !important;
+  border: 1px solid #E5E7EB;
+}
+
+.nav-item.active .nav-icon {
+  transform: scale(1.1);
 }
 
 .nav-item.active::before {

@@ -22,7 +22,7 @@ export function initUI() {
  * Función nuclear para limpiar cachés rebeldes y service workers antiguos.
  */
 async function forceSystemUpdate() {
-  const CURRENT_VER = 'v15-ultrasharp';
+  const CURRENT_VER = 'v16-super-crisp';
   if (localStorage.getItem('pazion_system_version') === CURRENT_VER) return;
 
   console.warn('Detectada versión antigua. Iniciando limpieza profunda de caché...');
@@ -40,7 +40,7 @@ async function forceSystemUpdate() {
     await Promise.all(keys.map(key => caches.delete(key)));
   }
 
-  localStorage.setItem('pazion_system_version', CURRENT_VER);
+  localStorage.setItem('pazion_system_version', 'v16-super-crisp');
   console.log('Limpieza completada. Recargando sistema...');
   window.location.reload();
 }
@@ -73,6 +73,7 @@ function renderSidebar(user) {
         <span class="sidebar-brand-name">+PaZion MEAL</span>
         <span class="sidebar-brand-tagline">Goles de Vida</span>
       </div>
+      <button id="closeSidebarBtn" style="background: none; border: none; font-size: 24px; color: #111827; margin-left: auto; display: none; cursor: pointer; padding: 4px;">✕</button>
     </div>
     
     <div class="sidebar-section">
@@ -137,6 +138,7 @@ function renderTopbar(user) {
   // Mobile menu logic
   const mobileBtn = document.getElementById('mobileMenuBtn');
   const sidebar = document.querySelector('.sidebar');
+  const closeBtn = document.getElementById('closeSidebarBtn');
 
   // Create backdrop if not exists
   let backdrop = document.querySelector('.sidebar-backdrop');
@@ -144,33 +146,32 @@ function renderTopbar(user) {
     backdrop = document.createElement('div');
     backdrop.className = 'sidebar-backdrop';
     document.body.appendChild(backdrop);
-    backdrop.style.display = 'none'; // Ensure it's hidden by default
+    backdrop.style.display = 'none';
   }
 
-  if (window.innerWidth <= 768) {
-    mobileBtn.style.display = 'block';
-  }
-
-  window.addEventListener('resize', () => {
-    if (window.innerWidth <= 768) {
-      mobileBtn.style.display = 'block';
-    } else {
-      mobileBtn.style.display = 'none';
+  const handleMobileView = () => {
+    const isMobile = window.innerWidth <= 768;
+    if (mobileBtn) mobileBtn.style.display = isMobile ? 'block' : 'none';
+    if (closeBtn) closeBtn.style.display = isMobile ? 'block' : 'none';
+    if (!isMobile) {
       if (sidebar) sidebar.classList.remove('open');
       if (backdrop) backdrop.style.display = 'none';
     }
-  });
+  };
+
+  handleMobileView();
+  window.addEventListener('resize', handleMobileView);
 
   const toggleSidebar = () => {
     if (sidebar) {
       const isOpen = sidebar.classList.toggle('open');
-      if (isOpen) backdrop.style.display = 'block';
-      else backdrop.style.display = 'none';
+      if (backdrop) backdrop.style.display = isOpen ? 'block' : 'none';
     }
   };
 
-  mobileBtn.addEventListener('click', toggleSidebar);
-  backdrop.addEventListener('click', toggleSidebar);
+  if (mobileBtn) mobileBtn.addEventListener('click', toggleSidebar);
+  if (backdrop) backdrop.addEventListener('click', toggleSidebar);
+  if (closeBtn) closeBtn.addEventListener('click', toggleSidebar);
 
   // Close sidebar when clicking links on mobile
   sidebar.querySelectorAll('a').forEach(link => {
