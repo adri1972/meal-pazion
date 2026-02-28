@@ -19,29 +19,70 @@
                 <div class="flex justify-between items-center" style="margin-bottom: var(--space-xl);">
                     <div>
                         <h1 class="text-gradient">Bandeja de Validación</h1>
-                        <p class="text-secondary">Aprobación de registros levantados en campo</p>
+                        <p class="text-secondary">Gestión y archivo de registros levantados en campo</p>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="table-wrapper">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Técnico</th>
-                                    <th>Indicador</th>
-                                    <th>Fecha</th>
-                                    <th>Valor</th>
-                                    <th>Ubicación</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody id="validationList">
-                                <tr>
-                                    <td colspan="6" class="text-center">Buscando registros pendientes...</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <!-- TABS -->
+                <div
+                    style="border-bottom: 1px solid var(--border); margin-bottom: var(--space-xl); display: flex; gap: var(--space-lg);">
+                    <button id="tabPendientes" class="tab-btn active"
+                        style="background:none; border:none; padding:10px 0; font-size:16px; font-weight:700; color:var(--purple-400); border-bottom:3px solid var(--purple-400); cursor:pointer;">Pendientes
+                        de Revisión</button>
+                    <button id="tabHistorial" class="tab-btn"
+                        style="background:none; border:none; padding:10px 0; font-size:16px; font-weight:600; color:var(--text-muted); border-bottom:3px solid transparent; cursor:pointer;">Historial
+                        Documental</button>
+                </div>
+
+                <!-- VISTA 1: PENDIENTES -->
+                <div id="viewPendientes">
+                    <div class="card">
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Técnico</th>
+                                        <th>Indicador</th>
+                                        <th>Fecha</th>
+                                        <th>Valor</th>
+                                        <th>Ubicación</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="validationList">
+                                    <tr>
+                                        <td colspan="6" class="text-center">Buscando registros pendientes...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VISTA 2: HISTORIAL -->
+                <div id="viewHistorial" class="hidden">
+                    <div class="card" style="margin-bottom: var(--space-lg);">
+                        <div class="flex items-center gap-md">
+                            <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                <label class="form-label text-xs">Agrupar por Mes</label>
+                                <select id="filterMonth" class="form-control">
+                                    <option value="all">Todos los meses</option>
+                                    <!-- Dinámico -->
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom: 0; flex: 1;">
+                                <label class="form-label text-xs">Estado de Registro</label>
+                                <select id="filterStatus" class="form-control">
+                                    <option value="all">Todos (Aprobados y Rechazados)</option>
+                                    <option value="Aprobado">Solo Aprobados ✅</option>
+                                    <option value="Rechazado">Solo Rechazados ❌</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="historialContainer">
+                        <!-- El historial dinámico se renderizará aquí -->
                     </div>
                 </div>
             </div>
@@ -73,15 +114,58 @@
 
         let currentRecord = null;
         let records = [];
+        let allProcessedRecords = [];
 
-        async function loadPending() {
+        // Tab Switching Logic
+        const tabPendientes = document.getElementById('tabPendientes');
+        const tabHistorial = document.getElementById('tabHistorial');
+        const viewPendientes = document.getElementById('viewPendientes');
+        const viewHistorial = document.getElementById('viewHistorial');
+
+        tabPendientes.addEventListener('click', () => {
+            tabPendientes.style.color = 'var(--purple-400)';
+            tabPendientes.style.borderBottomColor = 'var(--purple-400)';
+            tabPendientes.style.fontWeight = '700';
+            tabHistorial.style.color = 'var(--text-muted)';
+            tabHistorial.style.borderBottomColor = 'transparent';
+            tabHistorial.style.fontWeight = '600';
+
+            viewPendientes.classList.remove('hidden');
+            viewHistorial.classList.add('hidden');
+            loadData();
+        });
+
+        tabHistorial.addEventListener('click', () => {
+            tabHistorial.style.color = 'var(--purple-400)';
+            tabHistorial.style.borderBottomColor = 'var(--purple-400)';
+            tabHistorial.style.fontWeight = '700';
+            tabPendientes.style.color = 'var(--text-muted)';
+            tabPendientes.style.borderBottomColor = 'transparent';
+            tabPendientes.style.fontWeight = '600';
+
+            viewPendientes.classList.add('hidden');
+            viewHistorial.classList.remove('hidden');
+            loadData();
+        });
+
+        async function loadData() {
             await initDB();
             const allCaptures = await getAllData('capturas');
-            records = allCaptures.filter(c => c.estado === 'Pendiente');
 
+            // Pendientes
+            records = allCaptures.filter(c => c.estado === 'Pendiente' || c.estado === 'Borrador');
+
+            // Historial (Aprobados y Rechazados)
+            allProcessedRecords = allCaptures.filter(c => c.estado === 'Aprobado' || c.estado === 'Rechazado');
+
+            renderPendientes();
+            renderHistorial();
+        }
+
+        async function renderPendientes() {
             const tbody = document.getElementById('validationList');
             if (records.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 40px;">No hay registros pendientes de validación.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center" style="padding: 40px; color: var(--text-muted);">No hay registros pendientes de validación.</td></tr>';
                 return;
             }
 
@@ -89,13 +173,18 @@
 
             tbody.innerHTML = records.map(r => {
                 const ind = indicadores.find(i => i.id === r.indicador_id);
+                // Si es modo viejo con r.valor, usar eso, si es nuevo, coger participantes o conteo
+                let valToShow = r.valor || '-';
+                if (r.conteo) valToShow = r.conteo.total + ' pers.';
+                if (r.participantes) valToShow = r.participantes.length + ' pers.';
+
                 return `
                     <tr>
-                        <td>${r.usuario_nombre}</td>
-                        <td>${ind ? ind.nombre : 'Desconocido'}</td>
-                        <td>${new Date(r.fecha).toLocaleString()}</td>
-                        <td><strong>${r.valor}</strong></td>
-                        <td><span class="text-sm">📍 ${r.gps.lat.toFixed(4)}, ${r.gps.lng.toFixed(4)}</span></td>
+                        <td>${r.usuario_nombre || 'Técnico'}</td>
+                        <td>${ind ? ind.nombre : (r.indicador_nombre || 'Desconocido')}</td>
+                        <td>${new Date(r.fecha).toLocaleDateString()}</td>
+                        <td><strong>${valToShow}</strong></td>
+                        <td><span class="text-sm">📍 ${r.gps ? r.gps.lat.toFixed(4) : 'N/A'}</span></td>
                         <td>
                             <button class="btn btn-secondary btn-sm" onclick="window.viewDetail(${r.id})">Revisar</button>
                         </td>
@@ -104,52 +193,207 @@
             }).join('');
         }
 
-        window.viewDetail = async (id) => {
-            currentRecord = records.find(r => r.id === id);
-            const modal = document.getElementById('detailModal');
-            const body = document.getElementById('modalBody');
+        async function renderHistorial() {
+            const container = document.getElementById('historialContainer');
+            const monthFilter = document.getElementById('filterMonth').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+
+            // Extraer y poblar filtros de mes
+            const months = [...new Set(allProcessedRecords.map(r => {
+                const d = new Date(r.fecha);
+                return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            }))].sort().reverse();
+
+            const monthSelect = document.getElementById('filterMonth');
+            if (monthSelect.options.length <= 1) {
+                months.forEach(m => {
+                    const [y, mo] = m.split('-');
+                    const date = new Date(y, mo - 1, 1);
+                    const label = date.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+                    const opt = document.createElement('option');
+                    opt.value = m;
+                    opt.textContent = label.charAt(0).toUpperCase() + label.slice(1);
+                    monthSelect.appendChild(opt);
+                });
+            }
 
             const indicadores = await getAllData('indicadores');
-            const ind = indicadores.find(i => i.id === currentRecord.indicador_id);
+
+            // Agrupar por Mes
+            const grouped = {};
+
+            allProcessedRecords.forEach(r => {
+                const d = new Date(r.fecha);
+                const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+
+                // Aplicar Filtros
+                if (monthFilter !== 'all' && monthKey !== monthFilter) return;
+                if (statusFilter !== 'all' && r.estado !== statusFilter) return;
+
+                if (!grouped[monthKey]) grouped[monthKey] = { Aprobado: [], Rechazado: [] };
+                grouped[monthKey][r.estado].push(r);
+            });
+
+            if (Object.keys(grouped).length === 0) {
+                container.innerHTML = `
+                    <div class="card text-center" style="padding: var(--space-2xl);">
+                        <div style="font-size:48px; margin-bottom: var(--space-md);">📁</div>
+                        <h3 class="text-secondary">Sin Historial en este filtro</h3>
+                        <p class="text-muted">No se encontraron capturas procesadas para el filtro seleccionado.</p>
+                    </div>`;
+                return;
+            }
+
+            // Renderizar carpetas por mes
+            let html = '';
+            for (const monthKey of Object.keys(grouped).sort().reverse()) {
+                const d = new Date(monthKey + '-01T00:00:00');
+                const monthName = d.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+                const aprobados = grouped[monthKey]['Aprobado'];
+                const rechazados = grouped[monthKey]['Rechazado'];
+
+                if (aprobados.length === 0 && rechazados.length === 0) continue;
+
+                html += `
+                    <div class="card" style="margin-bottom: var(--space-lg); border-left: 4px solid var(--purple-400);">
+                        <h3 style="margin-bottom: var(--space-md); text-transform: capitalize; color: var(--text-primary);">
+                            📅 ${monthName}
+                        </h3>
+                `;
+
+                const renderTable = (lista, estado) => {
+                    if (lista.length === 0) return '';
+                    const badgeClass = estado === 'Aprobado' ? 'badge-success' : 'badge-danger';
+                    const icon = estado === 'Aprobado' ? '✅' : '❌';
+
+                    return `
+                        <div style="margin-top: var(--space-md);">
+                            <div class="flex items-center gap-sm" style="margin-bottom: 8px;">
+                                <span class="badge ${badgeClass}" style="font-size:13px;">${icon} ${estado}s (${lista.length})</span>
+                            </div>
+                            <div class="table-wrapper" style="background: rgba(255,255,255,0.02); border-radius: var(--radius-md);">
+                                <table style="font-size: 13px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha</th>
+                                            <th>Indicador</th>
+                                            <th>Técnico</th>
+                                            <th>Valor</th>
+                                            <th>Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${lista.map(r => {
+                        const ind = indicadores.find(i => i.id === r.indicador_id);
+                        let valToShow = r.valor || '-';
+                        if (r.conteo) valToShow = r.conteo.total + ' pers.';
+                        if (r.participantes) valToShow = r.participantes.length + ' pers.';
+
+                        return `
+                                            <tr>
+                                                <td class="text-muted">${new Date(r.fecha).toLocaleDateString()}</td>
+                                                <td><strong>${ind ? ind.nombre : (r.indicador_nombre || 'Desc.')}</strong></td>
+                                                <td>${r.usuario_nombre || 'Técnico'}</td>
+                                                <td>${valToShow}</td>
+                                                <td><button class="btn btn-ghost btn-sm" onclick="window.viewProcessedDetail(${r.id})">Ver →</button></td>
+                                            </tr>
+                                            `;
+                    }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                };
+
+                html += renderTable(aprobados, 'Aprobado');
+                html += renderTable(rechazados, 'Rechazado');
+
+                html += `</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        document.getElementById('filterMonth').addEventListener('change', renderHistorial);
+        document.getElementById('filterStatus').addEventListener('change', renderHistorial);
+
+        window.viewDetail = async (id) => {
+            currentRecord = records.find(r => r.id === id);
+            openDetailModal(currentRecord, true);
+        };
+
+        window.viewProcessedDetail = async (id) => {
+            currentRecord = allProcessedRecords.find(r => r.id === id);
+            openDetailModal(currentRecord, false);
+        };
+
+        async function openDetailModal(record, isPending) {
+            const modal = document.getElementById('detailModal');
+            const body = document.getElementById('modalBody');
+            const footer = document.querySelector('.modal-footer');
+
+            const indicadores = await getAllData('indicadores');
+            const ind = indicadores.find(i => i.id === record.indicador_id);
+
+            let valToShow = record.valor || '-';
+            if (record.conteo) valToShow = record.conteo.total + ' participantes';
+            if (record.participantes) valToShow = record.participantes.length + ' participantes guardados individualmente';
+
+            let gpsHtml = 'Sin datos GPS';
+            if (record.gps) {
+                gpsHtml = `
+                    <p class="text-sm"><strong>Coordenadas:</strong> ${record.gps.lat.toFixed(4)}, ${record.gps.lng.toFixed(4)}</p>
+                    <a href="https://www.google.com/maps?q=${record.gps.lat},${record.gps.lng}" target="_blank" class="text-sm text-gradient fw-600">Ver en Google Maps →</a>
+                `;
+            }
 
             body.innerHTML = `
+                <div class="${record.estado === 'Rechazado' ? 'alert alert-danger' : record.estado === 'Aprobado' ? 'alert alert-success' : ''}" style="${isPending ? 'display:none;' : 'margin-bottom:var(--space-md);'}">
+                    <strong>Estado actual: ${record.estado}</strong>
+                    ${record.comentario_validacion ? `<br><span class="text-sm">Motivo/Nota: ${record.comentario_validacion}</span>` : ''}
+                </div>
                 <div class="grid grid-2">
                     <div>
                         <h4 class="text-muted text-sm uppercase fw-bold">Información General</h4>
                         <div style="margin-top: var(--space-sm);">
-                            <p><strong>Indicador:</strong> ${ind ? ind.nombre : '-'}</p>
+                            <p><strong>Indicador:</strong> ${ind ? ind.nombre : (record.indicador_nombre || '-')}</p>
                             <p><strong>Meta:</strong> ${ind ? ind.meta : '-'}</p>
-                            <p><strong>Levantado por:</strong> ${currentRecord.usuario_nombre}</p>
-                            <p><strong>Fecha:</strong> ${new Date(currentRecord.fecha).toLocaleString()}</p>
-                            <p><strong>Valor Reportado:</strong> <span class="badge badge-purple" style="font-size: 14px;">${currentRecord.valor}</span></p>
+                            <p><strong>Levantado por:</strong> ${record.usuario_nombre || 'Técnico'}</p>
+                            <p><strong>Fecha:</strong> ${new Date(record.fecha).toLocaleString()}</p>
+                            <p><strong>Valor Reportado:</strong> <span class="badge badge-purple" style="font-size: 14px;">${valToShow}</span></p>
                         </div>
                         
-                        <h4 class="text-muted text-sm uppercase fw-bold" style="margin-top: var(--space-lg);">Observaciones</h4>
-                        <p class="text-secondary">${currentRecord.observaciones || 'Sin observaciones'}</p>
+                        <h4 class="text-muted text-sm uppercase fw-bold" style="margin-top: var(--space-lg);">Observaciones de Campo</h4>
+                        <p class="text-secondary">${record.observaciones || 'Sin observaciones'}</p>
                         
-                        <h4 class="text-muted text-sm uppercase fw-bold" style="margin-top: var(--space-lg);">Firma Digital</h4>
-                        <img src="${currentRecord.firma}" style="width: 200px; height: 100px; border: 1px solid var(--border); border-radius: var(--radius-md); background: white; margin-top: 5px;">
                     </div>
                     <div>
                         <h4 class="text-muted text-sm uppercase fw-bold">Evidencia Fotográfica</h4>
-                        <img src="${currentRecord.foto || 'https://placehold.co/400x300/0D0718/7B35C4?text=Sin+Evidencia'}" style="width: 100%; border-radius: var(--radius-md); margin-top: 5px;">
+                        <img src="${record.foto || record.firma || 'https://placehold.co/400x300/0D0718/7B35C4?text=Sin+Evidencia'}" style="width: 100%; border-radius: var(--radius-md); margin-top: 5px; max-height: 180px; object-fit: cover;">
                         
                         <h4 class="text-muted text-sm uppercase fw-bold" style="margin-top: var(--space-lg);">Ubicación GPS</h4>
                         <div style="background: var(--bg-card); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border); margin-top: 5px;">
-                            <p class="text-sm"><strong>Coordenadas:</strong> ${currentRecord.gps.lat}, ${currentRecord.gps.lng}</p>
-                            <p class="text-sm"><strong>Precisión:</strong> ±${currentRecord.gps.acc.toFixed(1)} metros</p>
-                            <a href="https://www.google.com/maps?q=${currentRecord.gps.lat},${currentRecord.gps.lng}" target="_blank" class="text-sm text-gradient fw-600">Ver en Google Maps →</a>
+                            ${gpsHtml}
                         </div>
                     </div>
                 </div>
+                ${isPending ? `
                 <div class="form-group" style="margin-top: var(--space-xl);">
                     <label class="form-label">Comentario de Revisión (Opcional)</label>
                     <textarea id="valComment" class="form-control" placeholder="Escriba el motivo del rechazo o nota de aprobación..."></textarea>
                 </div>
+                ` : ''}
             `;
 
+            if (isPending) {
+                footer.style.display = 'flex';
+            } else {
+                footer.style.display = 'none';
+            }
+
             modal.classList.remove('hidden');
-        };
+        }
 
         window.closeModal = () => {
             document.getElementById('detailModal').classList.add('hidden');
@@ -157,7 +401,7 @@
 
         document.getElementById('btnApprove').addEventListener('click', async () => {
             if (!currentRecord) return;
-            const comment = document.getElementById('valComment').value;
+            const comment = document.getElementById('valComment') ? document.getElementById('valComment').value : '';
 
             currentRecord.estado = 'Aprobado';
             currentRecord.comentario_validacion = comment;
@@ -165,12 +409,12 @@
             await updateData('capturas', currentRecord);
             showToast("Registro aprobado correctamente", "success");
             closeModal();
-            loadPending();
+            loadData();
         });
 
         document.getElementById('btnReject').addEventListener('click', async () => {
             if (!currentRecord) return;
-            const comment = document.getElementById('valComment').value;
+            const comment = document.getElementById('valComment') ? document.getElementById('valComment').value : '';
             if (!comment) {
                 alert("Por favor indique el motivo del rechazo en los comentarios.");
                 return;
@@ -182,10 +426,10 @@
             await updateData('capturas', currentRecord);
             showToast("Registro rechazado", "warning");
             closeModal();
-            loadPending();
+            loadData();
         });
 
-        loadPending();
+        loadData();
     </script>
 </body>
 
