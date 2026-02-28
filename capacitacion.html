@@ -263,29 +263,14 @@
                             indicadores hasta la sincronización de datos sin conexión a internet.
                         </p>
 
-                        <!-- Audio Element Oculto (Usaremos un placeholder por ahora) -->
-                        <audio id="podcastAudio"
-                            src="https://traffic.libsyn.com/secure/forcedn/thepodcasthost/How_to_start_a_podcast_Trailer.mp3"
-                            preload="metadata"></audio>
-
-                        <div class="audio-player">
-                            <button class="btn-play" id="btnPlayPause">
-                                ▶ <!-- o ⏸ -->
-                            </button>
-                            <span class="time-display" id="currentTime">0:00</span>
-                            <div class="progress-bar" id="progressBar">
-                                <div class="progress-fill" id="progressFill"></div>
-                                <div class="progress-handle" id="progressHandle"></div>
-                            </div>
-                            <span class="time-display" id="durationTime">5:30</span>
-
-                            <!-- Control de Volumen -->
-                            <div class="volume-container"
-                                style="display: flex; align-items: center; gap: 8px; margin-left: 12px; padding-left: 12px; border-left: 1px solid rgba(255,255,255,0.2);">
-                                <span id="btnMute" style="cursor: pointer; font-size: 16px;">🔊</span>
-                                <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1"
-                                    style="width: 60px; height: 4px; accent-color: white; cursor: pointer;">
-                            </div>
+                        <!-- Reproductor Embebido de Spotify Garantizado -->
+                        <div style="margin-top: var(--space-xl); width: 100%; max-width: 600px;">
+                            <iframe style="border-radius:12px"
+                                src="https://open.spotify.com/embed/episode/7G5O2wWmb2CE5RNDB8uY8Z?utm_source=generator&theme=0"
+                                width="100%" height="152" frameBorder="0" allowfullscreen=""
+                                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                                loading="lazy">
+                            </iframe>
                         </div>
                     </div>
                 </div>
@@ -401,109 +386,18 @@
 
         let isPlaying = false;
 
-        // Formatear tiempo (ej: 65 -> "1:05")
-        function formatTime(seconds) {
-            if (isNaN(seconds)) return "0:00";
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-        }
+        <script type="module">
+            import {initUI} from './js/app.js?v=8';
 
-        // Elementos de volumen
-        const volumeSlider = document.getElementById('volumeSlider');
-        const btnMute = document.getElementById('btnMute');
-        let lastVolume = 1;
+            // Inicializar barra lateral y superior
+            initUI();
 
-        // Cargar metadatos
-        audio.addEventListener('loadedmetadata', () => {
-            durationTimeEl.textContent = formatTime(audio.duration);
-            audio.volume = 1; // Asegurar volumen máximo al cargar
-        });
-
-        // Alternar Play/Pause
-        function togglePlay() {
-            if (isPlaying) {
-                audio.pause();
-                btnPlayPause.innerHTML = '▶';
-                isPlaying = false;
-            } else {
-                // Forzar volumen por si el navegador lo bloqueó
-                audio.volume = volumeSlider.value;
-                btnPlayPause.innerHTML = '⏳'; // Loading state
-
-                audio.play().then(() => {
-                    btnPlayPause.innerHTML = '⏸';
-                    isPlaying = true;
-                    console.log("Audio playing successfully");
-                }).catch(e => {
-                    console.error("Error al reproducir audio:", e);
-                    btnPlayPause.innerHTML = '⚠️';
-                    alert("Error reproduciendo el audio: " + e.message + "\nIntenta revisar la conexión a internet o los permisos del navegador.");
-                    isPlaying = false;
-                });
-            }
-        }
-
-        btnPlayPause.addEventListener('click', togglePlay);
-
-        // Control de Volumen
-        volumeSlider.addEventListener('input', (e) => {
-            const vol = e.target.value;
-            audio.volume = vol;
-            if (vol == 0) {
-                btnMute.textContent = '🔇';
-            } else if (vol < 0.5) {
-                btnMute.textContent = '🔉';
-            } else {
-                btnMute.textContent = '🔊';
-            }
-        });
-
-        // Botón Mute
-        btnMute.addEventListener('click', () => {
-            if (audio.volume > 0) {
-                lastVolume = audio.volume;
-                audio.volume = 0;
-                volumeSlider.value = 0;
-                btnMute.textContent = '🔇';
-            } else {
-                audio.volume = lastVolume || 1;
-                volumeSlider.value = audio.volume;
-                btnMute.textContent = audio.volume < 0.5 ? '🔉' : '🔊';
-            }
-        });
-
-        // Actualizar barra de progreso
-        audio.addEventListener('timeupdate', () => {
-            const percent = (audio.currentTime / audio.duration) * 100;
-            progressFill.style.width = `${percent}%`;
-            currentTimeEl.textContent = formatTime(audio.currentTime);
-
-            // Si el audio termina
-            if (audio.currentTime === audio.duration) {
-                isPlaying = false;
-                btnPlayPause.innerHTML = '▶';
-                progressFill.style.width = '0%';
-                audio.currentTime = 0;
-            }
-        });
-
-        // Clic en la barra para adelantar/atrasar
-        progressBar.addEventListener('click', (e) => {
-            const rect = progressBar.getBoundingClientRect();
-            const pos = (e.clientX - rect.left) / rect.width;
-            audio.currentTime = pos * audio.duration;
-        });
+        // El control de audio ahora es manejado íntegramente por el Iframe embebido de Spotify
+        // Las notas interactivas mantienen su funcionalidad visual a manera de ejemplo
 
         // Clic en los timestamps de las notas
         document.querySelectorAll('.timestamp').forEach(badge => {
-            badge.addEventListener('click', () => {
-                const timeStr = badge.dataset.time;
-                if (timeStr) {
-                    audio.currentTime = parseInt(timeStr);
-                    if (!isPlaying) {
-                        togglePlay();
-                    }
+                badge.addEventListener('click', () => {
                     // Animación visual de feedback en la nota
                     const noteContent = badge.nextElementSibling;
                     noteContent.style.transition = 'background 0.3s';
@@ -513,8 +407,7 @@
                     setTimeout(() => {
                         noteContent.style.background = 'transparent';
                     }, 1500);
-                }
-            });
+                });
         });
     </script>
 </body>
