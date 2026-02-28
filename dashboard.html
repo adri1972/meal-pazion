@@ -74,7 +74,7 @@
 
                 <div class="grid grid-2">
                     <!-- Recent Captures -->
-                    <div class="card">
+                    <div class="card" style="grid-column: 1 / -1;">
                         <div class="card-header">
                             <h3 class="card-title">Últimas Capturas en Campo</h3>
                             <a href="validacion.html" class="text-sm text-gradient fw-600">Ver todo</a>
@@ -98,7 +98,7 @@
                         </div>
                     </div>
                     <!-- Visualizaciones Chart.js y Alertas -->
-                    <div class="card" style="grid-column: span 12;">
+                    <div class="card" style="grid-column: 1 / -1;">
                         <div class="card-header">
                             <h3 class="card-title">Distribución Visual de Impacto</h3>
                         </div>
@@ -117,7 +117,7 @@
 
                 <div class="grid grid-3" style="margin-bottom: var(--space-2xl);">
                     <!-- Alertas Dinámicas (Reemplazando estáticas) -->
-                    <div class="card" style="grid-column: span 3;">
+                    <div class="card" style="grid-column: 1 / -1;">
                         <div class="card-header">
                             <h3 class="card-title">Alertas Inteligentes de Monitoreo</h3>
                         </div>
@@ -140,7 +140,7 @@
 
         // Inicializar UI y Auth
         initUI();
-        console.log('Sistema cargado - Versión v13-responsive');
+        console.log('Sistema cargado - Versión v14-fixed-grid');
 
         async function loadDashboardData() {
             console.log('Iniciando carga de datos del Dashboard...');

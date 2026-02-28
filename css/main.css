@@ -950,6 +950,8 @@ select.form-control {
   overflow-x: auto;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 table {
@@ -1501,6 +1503,30 @@ tbody td:first-child {
   .topbar {
     padding: 0 var(--space-md);
     justify-content: space-between;
+    gap: var(--space-xs);
+  }
+
+  .topbar-title {
+    font-size: 16px;
+    max-width: 180px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .topbar-actions #btnSync span {
+    display: none;
+    /* Hide text on small screens */
+  }
+
+  /* Table responsiveness */
+  thead th {
+    white-space: nowrap;
+  }
+
+  tbody td {
+    min-width: 100px;
+    /* Previene que las columnas colapsen */
   }
 
   /* Sidebar Backdrop */
@@ -1508,10 +1534,10 @@ tbody td:first-child {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.5);
     z-index: 95;
-    backdrop-filter: blur(2px);
-    animation: fadeIn 0.2s ease;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
   }
 
   .sidebar.open+.sidebar-backdrop {

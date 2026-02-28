@@ -4,7 +4,7 @@
  * Permite el funcionamiento offline cacheando los assets esenciales.
  */
 
-const CACHE_NAME = 'pazion-meal-v13-responsive';
+const CACHE_NAME = 'pazion-meal-v14-fixed-grid';
 const ASSETS = [
     './',
     './index.html',
