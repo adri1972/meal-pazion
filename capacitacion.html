@@ -349,21 +349,23 @@
                             <h3 style="margin-bottom: var(--space-md);">📚 Recursos Adicionales</h3>
                             <ul style="list-style: none; padding: 0; margin: 0;">
                                 <li style="margin-bottom: 12px;">
-                                    <a href="#" class="text-gradient fw-600"
+                                    <a href="assets/docs/Guia_Rapida_Captura_PaZion.pdf" target="_blank" download
+                                        class="text-gradient fw-600"
                                         style="display: flex; align-items: center; gap: 8px;">
                                         <span>📄</span> Descargar Guía Rápida (PDF)
                                     </a>
                                 </li>
                                 <li style="margin-bottom: 12px;">
                                     <a href="#" class="text-gradient fw-600"
-                                        style="display: flex; align-items: center; gap: 8px;">
-                                        <span>📊</span> Catálogo de Indicadores MEAL
+                                        style="display: flex; align-items: center; gap: 8px; opacity: 0.5;">
+                                        <span>📊</span> Catálogo de Indicadores MEAL (Próximamente)
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="#" class="text-gradient fw-600"
+                                    <a href="mailto:soporte@pazion.org?subject=Ayuda%20con%20App%20MEAL"
+                                        class="text-gradient fw-600"
                                         style="display: flex; align-items: center; gap: 8px;">
-                                        <span>📞</span> Contactar Soporte Técino
+                                        <span>📞</span> Contactar Soporte Técnico
                                     </a>
                                 </li>
                             </ul>
@@ -451,7 +453,11 @@
 
                 currentUtterance.onend = () => {
                     scriptIndex++;
-                    speakNext();
+                    if (scriptIndex < podcastScript.length) {
+                        speakNext();
+                    } else {
+                        pausePodcast(); // Detener visualmente al terminar
+                    }
                 };
 
                 window.speechSynthesis.speak(currentUtterance);
