@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guía Rápida: +PaZion MEAL</title>
+    <style>
+        :root {
+            --primary-color: #7B35C4;
+            --secondary-color: #A36AF5;
+            --text-primary: #1F2937;
+            --text-secondary: #4B5563;
+            --bg-color: #F3F4F6;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 3rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #E5E7EB;
+            padding-bottom: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .section {
+            margin-bottom: 2.5rem;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            border-left: 4px solid var(--secondary-color);
+            padding-left: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .step-card {
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            padding: 1.5rem;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            background: var(--primary-color);
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .alert {
+            background: #EFF6FF;
+            border-left: 4px solid #3B82F6;
+            padding: 1rem;
+            border-radius: 4px;
+            color: #1E3A8A;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                max-width: 100%;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">+PaZion MEAL</div>
+            <div class="subtitle">Manual de Supervivencia en Terreno para Técnicos (2026)</div>
+        </div>
+
+        <div class="section">
+            <h2>🌍 Trabajando en Comunidad (Modo Offline)</h2>
+            <div class="alert">
+                <strong>¿No hay señal de internet en la cancha?</strong> ¡Tranquilidad total! El sistema +PaZion está
+                diseñado para funcionar 100% desconectado. Sigue llenando encuestas con normalidad. Tus datos se guardan
+                inmediatamente en la memoria segura de tu celular.
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>📝 Los 3 Pasos de la Captura Diaria</h2>
+            <div class="step-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <div>
+                        <strong>Elige tu Eje Estratégico</strong>
+                        <p>Asegúrate de marcar si tu sesión de hoy fue "Empoderamiento", "Paz" o "Permanencia". De esto
+                            depende que los indicadores mostrados cambien a las metas correctas.</p>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <div>
+                        <strong>Llena los Datos</strong>
+                        <p>Usa la Escala del 1 al 10 para medir el estado emocional de los participantes o responde
+                            Sí/No de forma rápida. Usa los "Conteos" para la asistencia masiva.</p>
+                    </div>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <div>
+                        <strong>Firma y Envía</strong>
+                        <p>No olvides marcar tu posición de GPS. Si es vital, toma la foto a la planilla impresa usando
+                            tu cámara, dibuja tu firma con el dedo y haz clic en "Guardar Datos Localmente" (Botón
+                            verde). ¡Listo!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>🔄 El momento del Sincronizado Vital</h2>
+            <p>
+                Al regresar a la oficina, a tu casa, o en cuanto tu celular marque <strong>LTE/WiFi</strong>, tu deber
+                final del día es:
+                <br><br>
+                1. Abrir la página del sistema.<br>
+                2. Ir arriba a la derecha y buscar el botón con la nubecita.<br>
+                3. Hacer clic en <strong>Sincronizar</strong>.<br>
+                <br>
+                Una barrita de progreso verde indicará que absolutamente todos tus formularios del día fueron
+                despachados mágicamente a la base de datos principal de la Fundación para el Dashboard.
+            </p>
+        </div>
+
+        <div class="header"
+            style="border-bottom: none; border-top: 2px solid #E5E7EB; margin-top: 3rem; padding-top: 2rem;">
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Imprime esta guía presionando <b>Ctrl+P</b> o
+                <b>Command+P</b> en tu computadora.</p>
+        </div>
+    </div>
+</body>
+
+</html>
