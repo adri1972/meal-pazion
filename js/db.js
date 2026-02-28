@@ -5,7 +5,7 @@
  */
 
 const DB_NAME = 'PazionMEAL';
-const DB_VERSION = 6; // v6: limpia datos de prueba - inicio limpio
+const DB_VERSION = 7; // v7: Añadimos 15 datos de prueba hiperrealistas para Chart JS
 
 let db;
 
@@ -104,7 +104,47 @@ function _seedWithTransaction(transaction) {
     const indStore = transaction.objectStore('indicadores');
     INDICADORES_MAESTROS.forEach(i => indStore.put(i));
 
-    console.log('Datos iniciales sembrados correctamente.');
+    const objCapturas = transaction.objectStore('capturas');
+
+    // Generar 15 capturas ficticias para visualizar datos enriquecidos en el Dashboard
+    const estadosPosibles = ['Aprobado', 'Rechazado', 'Borrador', 'Aprobado', 'Aprobado']; // sesgado a aprobado
+    const ejesPosibles = ['Empoderamiento y Liderazgo Femenino', 'Construcción de Paz y Territorio', 'Permanencia y Excelencia Deportiva'];
+
+    for (let i = 0; i < 15; i++) {
+        let ejeRand = ejesPosibles[Math.floor(Math.random() * ejesPosibles.length)];
+        let indBase = INDICADORES_MAESTROS.find(ind => ind.eje === ejeRand);
+
+        let fechaRand = new Date();
+        fechaRand.setDate(fechaRand.getDate() - Math.floor(Math.random() * 30)); // últimos 30 días
+
+        let estadoRand = estadosPosibles[Math.floor(Math.random() * estadosPosibles.length)];
+        let syncStatus = (estadoRand === 'Aprobado' && Math.random() > 0.3) ? 'Synced' : 'Pending';
+
+        let capturaVirtual = {
+            id: i + 1,
+            indicador_id: indBase.id,
+            indicador_nombre: indBase.nombre,
+            eje: ejeRand,
+            fecha: fechaRand.toISOString(),
+            estado: estadoRand,
+            sync_status: syncStatus,
+            tipo: Math.random() > 0.5 ? 'retencion' : 'escala',
+            gps: { lat: 4.6097 + (Math.random() * 0.1), lng: -74.0817 + (Math.random() * 0.1) } // Cerca de Bogotá
+        };
+
+        if (capturaVirtual.tipo === 'retencion') {
+            capturaVirtual.conteo = { total: Math.floor(Math.random() * 50) + 10 };
+        } else {
+            let parts = [];
+            let r = Math.floor(Math.random() * 20) + 5;
+            for (let p = 0; p < r; p++) parts.push({ nombre: 'Participante ' + p, valor: Math.floor(Math.random() * 10) });
+            capturaVirtual.participantes = parts;
+        }
+
+        objCapturas.put(capturaVirtual);
+    }
+
+    console.log('Datos iniciales sembrados correctamente (incluyendo 15 capturas falsas de prueba).');
 }
 
 /**

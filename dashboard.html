@@ -97,27 +97,42 @@
                             </table>
                         </div>
                     </div>
-
-                    <!-- Alerts/Tasks -->
-                    <div class="card">
+                    <!-- Visualizaciones Chart.js y Alertas -->
+                    <div class="card" style="grid-column: span 12;">
                         <div class="card-header">
-                            <h3 class="card-title">Alertas de Monitoreo</h3>
+                            <h3 class="card-title">Distribución Visual de Impacto</h3>
                         </div>
-                        <div class="flex flex-col gap-md">
-                            <div class="alert alert-warning" style="margin-bottom: 0;">
-                                <strong>Bajo desempeño:</strong> El indicador "Tasa de Retención" está un 15% por debajo
-                                de la meta en la región Norte.
+                        <div class="grid grid-2" style="gap: 2rem; margin-top: 1rem;">
+                            <!-- Gráfico de Dona -->
+                            <div style="position: relative; height: 250px; display: flex; justify-content: center;">
+                                <canvas id="chartEjes"></canvas>
                             </div>
-                            <div class="alert alert-info" style="margin-bottom: 0;">
-                                <strong>Recordatorio:</strong> Cierre de reporte trimestral en 5 días. Asegure la
-                                sincronización de todos los dispositivos.
+                            <!-- Gráfico de Barras -->
+                            <div style="position: relative; height: 250px;">
+                                <canvas id="chartEstados"></canvas>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-3" style="margin-bottom: var(--space-2xl);">
+                    <!-- Alertas Dinámicas (Reemplazando estáticas) -->
+                    <div class="card" style="grid-column: span 3;">
+                        <div class="card-header">
+                            <h3 class="card-title">Alertas Inteligentes de Monitoreo</h3>
+                        </div>
+                        <div class="flex flex-col gap-md" id="alertasInteligentes">
+                            <div class="alert alert-info">Calculando desempeño de indicadores desde la base de datos
+                                local...</div>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
+
+    <!-- Cargar Motor Gráfico Offline Seguro -->
+    <script src="js/chart.min.js"></script>
 
     <script type="module">
         import { initUI } from './js/app.js?v=8';
@@ -193,7 +208,13 @@
                 const metaEje = inds.length * 5; // Simular que se esperan 5 capturas por indicador
                 const avanceEje = Math.min(100, Math.round((capturasDelEje / metaEje) * 100)) || 0;
 
-                return `
+                grid.innerHTML = Object.entries(ejes).map(([eje, inds]) => {
+                    // Calcular avance por eje (basado en proporción de capturas al indicador)
+                    const capturasDelEje = capturas.filter(c => c.eje === eje).length;
+                    const metaEje = inds.length * 5; // Simular que se esperan 5 capturas por indicador
+                    const avanceEje = Math.min(100, Math.round((capturasDelEje / metaEje) * 100)) || 0;
+
+                    return `
                 <div class="card">
                     <div class="card-header">
                         <span class="badge badge-purple">${eje}</span>
@@ -217,26 +238,133 @@
                 </div>
             `}).join('');
 
-            // --- Cargar capturas recientes reales ---
-            const recentBody = document.getElementById('recentCaptures');
-            if (capturas.length === 0) {
-                recentBody.innerHTML = `
+                // --- Lógica Visual de Gráficos (Chart.js) ---
+
+                // 1. Preparar datos para Dona (Participantes por Eje)
+                const participantesPorEje = { 'Empoderamiento': 0, 'Paz': 0, 'Permanencia': 0 };
+
+                // 2. Preparar datos para Barras (Estado de Capturas)
+                const estadosPorEje = {
+                    'Empoderamiento': { Aprobado: 0, Borrador: 0, Rechazado: 0 },
+                    'Paz': { Aprobado: 0, Borrador: 0, Rechazado: 0 },
+                    'Permanencia': { Aprobado: 0, Borrador: 0, Rechazado: 0 }
+                };
+
+                capturas.forEach(c => {
+                    // Sumar participantes por eje
+                    let sumaParcial = 0;
+                    if (c.tipo === 'retencion' && c.conteo && c.conteo.total) {
+                        sumaParcial = c.conteo.total;
+                    } else if ((c.tipo === 'escala' || c.tipo === 'binario') && c.participantes) {
+                        sumaParcial = c.participantes.length;
+                    }
+
+                    if (participantesPorEje[c.eje] !== undefined) participantesPorEje[c.eje] += sumaParcial;
+
+                    // Contar estados
+                    if (estadosPorEje[c.eje] && estadosPorEje[c.eje][c.estado] !== undefined) {
+                        estadosPorEje[c.eje][c.estado]++;
+                    }
+                });
+
+                // Paleta de colores +PaZion
+                const colors = ['#7B35C4', '#2E9E7A', '#F5A623'];
+
+                // Dibujar Dona
+                const ctxDona = document.getElementById('chartEjes').getContext('2d');
+                new Chart(ctxDona, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(participantesPorEje),
+                        datasets: [{
+                            data: Object.values(participantesPorEje),
+                            backgroundColor: colors,
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { color: '#4B5563', font: { family: 'Inter' } } }
+                        },
+                        cutout: '70%'
+                    }
+                });
+
+                // Dibujar Barras
+                const ctxBarras = document.getElementById('chartEstados').getContext('2d');
+                new Chart(ctxBarras, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(estadosPorEje),
+                        datasets: [
+                            { label: 'Aprobados', data: Object.values(estadosPorEje).map(e => e.Aprobado), backgroundColor: '#2E9E7A', borderRadius: 4 },
+                            { label: 'Borradores', data: Object.values(estadosPorEje).map(e => e.Borrador), backgroundColor: '#F5A623', borderRadius: 4 },
+                            { label: 'Rechazados', data: Object.values(estadosPorEje).map(e => e.Rechazado), backgroundColor: '#EF4444', borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#E5E7EB' }, ticks: { stepSize: 1, color: '#4B5563' } },
+                            x: { grid: { display: false }, ticks: { color: '#4B5563', font: { family: 'Inter' } } }
+                        },
+                        plugins: { legend: { position: 'bottom', labels: { color: '#4B5563', font: { family: 'Inter' } } } }
+                    }
+                });
+
+                // --- Lógica Alertas Inteligentes ---
+                const alertasDiv = document.getElementById('alertasInteligentes');
+                let htmlAlertas = '';
+
+                // Alerta 1: Felicidad por Avance Global
+                if (avanceGlobal >= 80) {
+                    htmlAlertas += `<div class="alert alert-success" style="margin-bottom: 0;"><strong>🏆 ¡Excelente trabajo!</strong> Has superado el 80% de la meta global de recolección de capturas. ¡Sigue así!</div>`;
+                } else if (avanceGlobal < 30 && totalCapturas > 0) {
+                    htmlAlertas += `<div class="alert alert-warning" style="margin-bottom: 0;"><strong>⚠️ Atención:</strong> El avance global es bajo (${avanceGlobal}%). Te recomendamos acelerar las salidas a terreno.</div>`;
+                }
+
+                // Alerta 2: Correcciones Pendientes (Rechazos)
+                const capturasRechazadas = capturas.filter(c => c.estado === 'Rechazado').length;
+                if (capturasRechazadas > 0) {
+                    htmlAlertas += `<div class="alert alert-danger" style="margin-bottom: 0;"><strong>🛑 Acción requerida:</strong> Tienes ${capturasRechazadas} formulario(s) rechazado(s) por el coordinador. <b>Por favor corrígelos antes de sincronizar.</b></div>`;
+                }
+
+                // Alerta 3: Recordatorio Vacío o Éxito Local
+                if (totalCapturas === 0) {
+                    htmlAlertas += `<div class="alert alert-info" style="margin-bottom: 0;"><strong>👋 ¡Bienvenido!</strong> Realiza tu primera captura de datos en terreno para empezar a ver las estadísticas.</div>`;
+                } else if (pendientesSync >= 5) {
+                    htmlAlertas += `<div class="alert alert-warning" style="margin-bottom: 0;"><strong>☁️ Advertencia de Nube:</strong> Tienes demasiados registros (${pendientesSync}) sin subir a la base de datos principal de la Fundación asegúrate de tener internet y hacer clic en SINCRONIZAR pronto.</div>`;
+                } else if (capturasRechazadas === 0 && totalCapturas > 0) {
+                    htmlAlertas += `<div class="alert alert-info" style="margin-bottom: 0;"><strong>✓ Todo en orden:</strong> No tienes rechazos pendientes y los datos fluyen normalmente.</div>`;
+                }
+
+                alertasDiv.innerHTML = htmlAlertas;
+
+
+                // --- Cargar capturas recientes reales ---
+                const recentBody = document.getElementById('recentCaptures');
+                if (capturas.length === 0) {
+                    recentBody.innerHTML = `
                     <tr>
                         <td colspan="4" class="text-center text-muted" style="padding: var(--space-xl) 0;">
                             No hay capturas recientes. Los registros aparecerán aquí.
                         </td>
                     </tr>
                 `;
-            } else {
-                // Últimas 5 capturas
-                const recientes = [...capturas].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 5);
+                } else {
+                    // Últimas 5 capturas
+                    const recientes = [...capturas].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 5);
 
-                recentBody.innerHTML = recientes.map(c => {
-                    let badgeClass = 'badge-warning';
-                    if (c.estado === 'Aprobado') badgeClass = 'badge-success';
-                    if (c.estado === 'Rechazado') badgeClass = 'badge-danger';
+                    recentBody.innerHTML = recientes.map(c => {
+                        let badgeClass = 'badge-warning';
+                        if (c.estado === 'Aprobado') badgeClass = 'badge-success';
+                        if (c.estado === 'Rechazado') badgeClass = 'badge-danger';
 
-                    return `
+                        return `
                     <tr>
                         <td class="fw-500">${c.indicador_nombre}</td>
                         <td class="text-sm text-muted">${new Date(c.fecha).toLocaleDateString('es-ES')}</td>
@@ -244,14 +372,14 @@
                         <td><span class="badge ${badgeClass}">${c.estado}</span></td>
                     </tr>
                 `}).join('');
-            }
-        }
+                }
+            } // <-- Cierre de loadDashboardData
 
         loadDashboardData();
 
-        document.getElementById('btnNuevaCaptura')?.addEventListener('click', () => {
-            window.location.href = 'captura.html';
-        });
+            document.getElementById('btnNuevaCaptura')?.addEventListener('click', () => {
+                window.location.href = 'captura.html';
+            });
     </script>
 </body>
 
