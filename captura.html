@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Captura de Datos | Sistema MEAL +PaZion</title>
-    <link rel="stylesheet" href="css/main.css?v=11.2">
+    <link rel="stylesheet" href="css/main.css?v=11.3">
     <style>
         .step {
             display: none;
@@ -122,21 +122,27 @@
         }
 
         .resultado-pill.logrado {
-            background: rgba(34, 197, 94, 0.15);
-            color: #86EFAC;
-            border: 1px solid rgba(34, 197, 94, 0.3);
+            background: rgba(22, 101, 52, 0.15);
+            /* Verde bosque muy suave bg */
+            color: #166534;
+            /* Verde bosque fuerte */
+            border: 1px solid rgba(22, 101, 52, 0.3);
         }
 
         .resultado-pill.no-logrado {
-            background: rgba(239, 68, 68, 0.12);
-            color: #FCA5A5;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgba(153, 27, 27, 0.12);
+            /* Rojo oscuro bg */
+            color: #991B1B;
+            /* Rojo oscuro fuerte */
+            border: 1px solid rgba(153, 27, 27, 0.3);
         }
 
         .resultado-pill.neutral {
-            background: rgba(245, 158, 11, 0.12);
-            color: #FDE68A;
-            border: 1px solid rgba(245, 158, 11, 0.3);
+            background: rgba(146, 64, 14, 0.12);
+            /* Ámbar oscuro bg */
+            color: #92400E;
+            /* Ámbar oscuro fuerte */
+            border: 1px solid rgba(146, 64, 14, 0.3);
         }
 
         /* ── Resumen sesión ── */
@@ -219,15 +225,15 @@
         }
 
         .binary-option.si.selected {
-            border-color: var(--success);
-            background: rgba(34, 197, 94, 0.15);
-            color: #86EFAC;
+            border-color: var(--green-700);
+            background: rgba(12, 122, 92, 0.15);
+            color: var(--green-800);
         }
 
         .binary-option.no.selected {
             border-color: var(--danger);
             background: rgba(239, 68, 68, 0.15);
-            color: #FCA5A5;
+            color: #991B1B;
         }
 
         .binary-option:not(.selected) {

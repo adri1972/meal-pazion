@@ -34,7 +34,8 @@
   --border-accent: rgba(123, 53, 196, 0.35);
   --text-primary: #1A1035;
   --text-secondary: #5A4E7A;
-  --text-muted: #9B8FBB;
+  --text-muted: #6B5F8B;
+  /* Darkened from #9B8FBB for contrast (WCAG) */
 
   /* Status Colors */
   --success: #22C55E;
