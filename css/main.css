@@ -206,7 +206,7 @@ ol {
 /* ─── SIDEBAR ───────────────────────────────────────────── */
 .sidebar {
   width: var(--sidebar-width);
-  background: #FFFFFF;
+  background: #FFFFFF !important;
   border-right: 1px solid var(--border);
   position: fixed;
   top: 0;
@@ -214,8 +214,8 @@ ol {
   bottom: 0;
   display: flex;
   flex-direction: column;
-  z-index: 100;
-  box-shadow: 2px 0 16px rgba(123, 53, 196, 0.08);
+  z-index: 1000;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
   overflow-y: auto;
   transition: transform var(--transition-slow);
 }
@@ -280,11 +280,12 @@ ol {
   border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 500;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   transition: all var(--transition);
   position: relative;
   margin-bottom: 2px;
   cursor: pointer;
+  font-weight: 600;
 }
 
 .nav-item:hover {
@@ -1529,15 +1530,15 @@ tbody td:first-child {
     /* Previene que las columnas colapsen */
   }
 
-  /* Sidebar Backdrop */
+  /* Sidebar Backdrop - Solider and without blur for better performance/sharpness */
   .sidebar-backdrop {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 95;
-    backdrop-filter: blur(4px);
-    animation: fadeIn 0.3s ease;
+    background: rgba(0, 0, 0, 0.65);
+    z-index: 900;
+    backdrop-filter: none;
+    animation: fadeIn 0.2s ease;
   }
 
   .sidebar.open+.sidebar-backdrop {

@@ -22,7 +22,7 @@ export function initUI() {
  * Función nuclear para limpiar cachés rebeldes y service workers antiguos.
  */
 async function forceSystemUpdate() {
-  const CURRENT_VER = 'v14-fixed-grid';
+  const CURRENT_VER = 'v15-ultrasharp';
   if (localStorage.getItem('pazion_system_version') === CURRENT_VER) return;
 
   console.warn('Detectada versión antigua. Iniciando limpieza profunda de caché...');
