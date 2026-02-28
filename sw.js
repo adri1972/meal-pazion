@@ -4,7 +4,7 @@
  * Permite el funcionamiento offline cacheando los assets esenciales.
  */
 
-const CACHE_NAME = 'pazion-meal-v9-forceupdate';
+const CACHE_NAME = 'pazion-meal-v11-objectives-fix';
 const ASSETS = [
     './',
     './index.html',

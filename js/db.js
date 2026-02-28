@@ -5,7 +5,7 @@
  */
 
 const DB_NAME = 'PazionMEAL';
-const DB_VERSION = 7; // v7: Añadimos 15 datos de prueba hiperrealistas para Chart JS
+const DB_VERSION = 8; // v8: Refactorización de sembrado para mayor robustez
 
 let db;
 
@@ -86,16 +86,18 @@ export async function initDB() {
             captureStore.createIndex('sync_status', 'sync_status', { unique: false });
 
             // --- Sembrar datos iniciales en la misma transacción de migración ---
-            _seedWithTransaction(tx);
+            seedAllData(tx);
         };
     });
 }
 
 /**
- * Siembra datos usando una transacción existente (usada en onupgradeneeded).
- * @param {IDBTransaction} transaction
+ * Función centralizada de sembrado de datos (Maestros + Capturas de prueba).
+ * @param {IDBTransaction} transaction 
  */
-function _seedWithTransaction(transaction) {
+export function seedAllData(transaction) {
+    console.log('Iniciando sembrado completo de datos...');
+
     const userStore = transaction.objectStore('usuarios');
     USUARIOS_MAESTROS.forEach(u => userStore.put(u));
 
@@ -107,7 +109,7 @@ function _seedWithTransaction(transaction) {
     const objCapturas = transaction.objectStore('capturas');
 
     // Generar 15 capturas ficticias para visualizar datos enriquecidos en el Dashboard
-    const estadosPosibles = ['Aprobado', 'Rechazado', 'Borrador', 'Aprobado', 'Aprobado']; // sesgado a aprobado
+    const estadosPosibles = ['Aprobado', 'Rechazado', 'Borrador', 'Aprobado', 'Aprobado'];
     const ejesPosibles = ['Empoderamiento y Liderazgo Femenino', 'Construcción de Paz y Territorio', 'Permanencia y Excelencia Deportiva'];
 
     for (let i = 0; i < 15; i++) {
@@ -115,7 +117,7 @@ function _seedWithTransaction(transaction) {
         let indBase = INDICADORES_MAESTROS.find(ind => ind.eje === ejeRand);
 
         let fechaRand = new Date();
-        fechaRand.setDate(fechaRand.getDate() - Math.floor(Math.random() * 30)); // últimos 30 días
+        fechaRand.setDate(fechaRand.getDate() - Math.floor(Math.random() * 30));
 
         let estadoRand = estadosPosibles[Math.floor(Math.random() * estadosPosibles.length)];
         let syncStatus = (estadoRand === 'Aprobado' && Math.random() > 0.3) ? 'Synced' : 'Pending';
@@ -129,7 +131,7 @@ function _seedWithTransaction(transaction) {
             estado: estadoRand,
             sync_status: syncStatus,
             tipo: Math.random() > 0.5 ? 'retencion' : 'escala',
-            gps: { lat: 4.6097 + (Math.random() * 0.1), lng: -74.0817 + (Math.random() * 0.1) } // Cerca de Bogotá
+            gps: { lat: 4.6097 + (Math.random() * 0.1), lng: -74.0817 + (Math.random() * 0.1) }
         };
 
         if (capturaVirtual.tipo === 'retencion') {
@@ -144,7 +146,7 @@ function _seedWithTransaction(transaction) {
         objCapturas.put(capturaVirtual);
     }
 
-    console.log('Datos iniciales sembrados correctamente (incluyendo 15 capturas falsas de prueba).');
+    console.log('Sembrado completado (Maestros + 15 Capturas de prueba).');
 }
 
 /**
@@ -158,17 +160,19 @@ export async function ensureDataSeeded() {
     }
 
     const indicadores = await getAllData('indicadores');
-    console.log(`ensureDataSeeded: encontrados ${indicadores.length} indicadores.`);
+    const capturas = await getAllData('capturas');
 
-    if (indicadores.length >= INDICADORES_MAESTROS.length) {
-        console.log('Datos de indicadores OK.');
+    console.log(`ensureDataSeeded: ${indicadores.length} indicadores, ${capturas.length} capturas.`);
+
+    if (indicadores.length >= INDICADORES_MAESTROS.length && capturas.length > 0) {
+        console.log('Datos de indicadores y capturas OK.');
         return;
     }
 
-    console.warn(`BD con ${indicadores.length} indicadores (se esperan ${INDICADORES_MAESTROS.length}). Re-sembrando...`);
+    console.warn(`Re-sembrando datos (Faltan indicadores o capturas)...`);
 
     return new Promise((resolve, reject) => {
-        const transaction = db.transaction(['usuarios', 'proyectos', 'indicadores'], 'readwrite');
+        const transaction = db.transaction(['usuarios', 'proyectos', 'indicadores', 'capturas'], 'readwrite');
 
         transaction.oncomplete = () => {
             console.log('Re-siembra completada exitosamente.');
@@ -179,13 +183,7 @@ export async function ensureDataSeeded() {
             reject(e.target.error);
         };
 
-        const userStore = transaction.objectStore('usuarios');
-        USUARIOS_MAESTROS.forEach(u => userStore.put(u));
-
-        transaction.objectStore('proyectos').put(PROYECTO_MAESTRO);
-
-        const indStore = transaction.objectStore('indicadores');
-        INDICADORES_MAESTROS.forEach(i => indStore.put(i));
+        seedAllData(transaction);
     });
 }
 

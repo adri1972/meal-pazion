@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard | Sistema MEAL +PaZion</title>
-    <link rel="stylesheet" href="css/main.css?v=8">
+    <link rel="stylesheet" href="css/main.css?v=11">
 </head>
 
 <body>
@@ -135,249 +135,262 @@
     <script src="js/chart.min.js"></script>
 
     <script type="module">
-        import { initUI } from './js/app.js?v=8';
-        import { initDB, getAllData, ensureDataSeeded } from './js/db.js?v=8';
+        import { initUI, showToast } from './js/app.js?v=11';
+        import { initDB, getAllData, ensureDataSeeded } from './js/db.js?v=11';
 
         // Inicializar UI y Auth
         initUI();
 
         async function loadDashboardData() {
-            await initDB();
-            await ensureDataSeeded(); // Garantiza que siempre haya datos
-            const indicadores = await getAllData('indicadores');
-            const capturas = await getAllData('capturas');
+            console.log('Iniciando carga de datos del Dashboard...');
             const grid = document.getElementById('proyectosGrid');
 
-            // --- Cálculos Globales ---
-            const totalCapturas = capturas.length;
-            const pendientesSync = capturas.filter(c => c.sync_status === 'Pending').length;
+            try {
+                await initDB();
+                console.log('DB inicializada.');
 
-            // Participantes (suma de inscritas en retencion + total encuestadas)
-            let totalParticipantes = 0;
-            // Comunidades (simulado por ahora como ubicaciones únicas GPS aproximado)
-            const comunidadesUnicas = new Set();
+                await ensureDataSeeded();
+                console.log('Sembrado verificado.');
 
-            let capturasExitosas = 0; // Para calcular un avance global simulado basado en capturas aprobadas o que lograron meta
+                const indicadores = await getAllData('indicadores');
+                const capturas = await getAllData('capturas');
 
-            capturas.forEach(c => {
-                if (c.gps && c.gps.lat) {
-                    // Redondear a 2 decimales para agrupar (aprox 1km)
-                    comunidadesUnicas.add(`${c.gps.lat.toFixed(2)},${c.gps.lng.toFixed(2)}`);
+                console.log(`Datos obtenidos: ${indicadores.length} indicadores, ${capturas.length} capturas.`);
+
+                // --- Cálculos Globales ---
+                const totalCapturas = capturas.length;
+                const pendientesSync = capturas.filter(c => c.sync_status === 'Pending').length;
+
+                let totalParticipantes = 0;
+                const comunidadesUnicas = new Set();
+                let capturasExitosas = 0;
+
+                capturas.forEach(c => {
+                    if (c.gps && c.gps.lat) {
+                        comunidadesUnicas.add(`${c.gps.lat.toFixed(2)},${c.gps.lng.toFixed(2)}`);
+                    }
+
+                    if (c.tipo === 'retencion' && c.conteo && c.conteo.total) {
+                        totalParticipantes += c.conteo.total;
+                    } else if ((c.tipo === 'escala' || c.tipo === 'binario') && c.participantes) {
+                        totalParticipantes += c.participantes.length;
+                    }
+
+                    if (c.estado === 'Aprobado') capturasExitosas++;
+                });
+
+                const metaCapturasGlobal = 100;
+                const avanceGlobal = Math.min(100, Math.round((totalCapturas / metaCapturasGlobal) * 100));
+
+                // Actualizar UI
+                document.getElementById('globalAvance').textContent = `${avanceGlobal}%`;
+                document.getElementById('totalParticipantes').textContent = totalParticipantes;
+                document.getElementById('totalComunidades').textContent = Math.max(1, comunidadesUnicas.size + (totalCapturas > 0 ? 1 : 0));
+
+                const syncEl = document.getElementById('pendientesSync');
+                const syncStatusEl = document.getElementById('syncStatus');
+                syncEl.textContent = pendientesSync;
+                if (pendientesSync > 0) {
+                    syncEl.style.color = 'var(--warning)';
+                    syncStatusEl.textContent = 'Requiere conexión';
+                } else {
+                    syncEl.style.color = 'var(--info)';
+                    syncStatusEl.textContent = 'Al día';
                 }
 
-                if (c.tipo === 'retencion' && c.conteo && c.conteo.total) {
-                    totalParticipantes += c.conteo.total;
-                } else if ((c.tipo === 'escala' || c.tipo === 'binario') && c.participantes) {
-                    totalParticipantes += c.participantes.length;
-                }
+                // --- Agrupar indicadores por eje ---
+                const ejes = {};
+                indicadores.forEach(ind => {
+                    if (!ejes[ind.eje]) ejes[ind.eje] = [];
+                    ejes[ind.eje].push(ind);
+                });
 
-                if (c.estado === 'Aprobado') capturasExitosas++;
-            });
+                grid.innerHTML = Object.entries(ejes).map(([eje, inds]) => {
+                    const capturasDelEje = capturas.filter(c => c.eje === eje).length;
+                    const metaEje = inds.length * 5;
+                    const avanceEje = Math.min(100, Math.round((capturasDelEje / metaEje) * 100)) || 0;
 
-            // Simulamos un % de avance basado en el volumen de capturas (ej. meta 100 capturas)
-            const metaCapturasGlobal = 100;
-            const avanceGlobal = Math.min(100, Math.round((totalCapturas / metaCapturasGlobal) * 100));
-
-            // Actualizar UI
-            document.getElementById('globalAvance').textContent = `${avanceGlobal}%`;
-            document.getElementById('totalParticipantes').textContent = totalParticipantes;
-            document.getElementById('totalComunidades').textContent = Math.max(1, comunidadesUnicas.size + (totalCapturas > 0 ? 1 : 0)); // Al menos 1 si hay capturas
-
-            const syncEl = document.getElementById('pendientesSync');
-            const syncStatusEl = document.getElementById('syncStatus');
-            syncEl.textContent = pendientesSync;
-            if (pendientesSync > 0) {
-                syncEl.style.color = 'var(--warning)';
-                syncStatusEl.textContent = 'Requiere conexión';
-            } else {
-                syncEl.style.color = 'var(--info)';
-                syncStatusEl.textContent = 'Al día';
-            }
-
-
-            // --- Agrupar indicadores por eje ---
-            const ejes = {};
-            indicadores.forEach(ind => {
-                if (!ejes[ind.eje]) ejes[ind.eje] = [];
-                ejes[ind.eje].push(ind);
-            });
-
-            grid.innerHTML = Object.entries(ejes).map(([eje, inds]) => {
-                // Calcular avance por eje (basado en proporción de capturas al indicador)
-                const capturasDelEje = capturas.filter(c => c.eje === eje).length;
-                const metaEje = inds.length * 5; // Simular que se esperan 5 capturas por indicador
-                const avanceEje = Math.min(100, Math.round((capturasDelEje / metaEje) * 100)) || 0;
-
-                return `
-                <div class="card">
-                    <div class="card-header">
-                        <span class="badge badge-purple">${eje}</span>
-                    </div>
-                    <h3 style="margin-bottom: var(--space-md);">${eje}</h3>
-                    <div class="progress-container">
-                        <div class="progress-header">
-                            <span class="progress-label">Avance Eje</span>
-                            <span class="progress-value">${avanceEje}%</span>
-                        </div>
-                        <div class="progress-track">
-                            <div class="progress-fill" style="width: ${avanceEje}%"></div>
-                        </div>
-                    </div>
-                    <p class="text-sm text-muted" style="margin-top: var(--space-md);">
-                        ${inds.length} indicadores activos en este eje estratégicos. (${capturasDelEje} registros)
-                    </p>
-                    <button class="btn btn-ghost btn-sm btn-full" style="margin-top: var(--space-md);" onclick="location.href='captura.html?eje=${encodeURIComponent(eje)}'">
-                        Ver Indicadores
-                    </button>
-                </div>
-            `}).join('');
-
-            // --- Lógica Visual de Gráficos (Chart.js) ---
-
-            // 1. Preparar datos para Dona (Participantes por Eje)
-            const participantesPorEje = { 
-                'Empoderamiento y Liderazgo Femenino': 0, 
-                'Construcción de Paz y Territorio': 0, 
-                'Permanencia y Excelencia Deportiva': 0 
-            };
-
-            // 2. Preparar datos para Barras (Estado de Capturas)
-            const estadosPorEje = {
-                'Empoderamiento y Liderazgo Femenino': { Aprobado: 0, Borrador: 0, Rechazado: 0 },
-                'Construcción de Paz y Territorio': { Aprobado: 0, Borrador: 0, Rechazado: 0 },
-                'Permanencia y Excelencia Deportiva': { Aprobado: 0, Borrador: 0, Rechazado: 0 }
-            };
-
-            capturas.forEach(c => {
-                // Sumar participantes por eje
-                let sumaParcial = 0;
-                if (c.tipo === 'retencion' && c.conteo && c.conteo.total) {
-                    sumaParcial = c.conteo.total;
-                } else if ((c.tipo === 'escala' || c.tipo === 'binario') && c.participantes) {
-                    sumaParcial = c.participantes.length;
-                }
-
-                if (participantesPorEje[c.eje] !== undefined) participantesPorEje[c.eje] += sumaParcial;
-
-                // Contar estados
-                if (estadosPorEje[c.eje] && estadosPorEje[c.eje][c.estado] !== undefined) {
-                    estadosPorEje[c.eje][c.estado]++;
-                }
-            });
-
-            // Paleta de colores +PaZion
-            const colors = ['#7B35C4', '#2E9E7A', '#F5A623'];
-
-            // Dibujar Dona
-            const ctxDona = document.getElementById('chartEjes').getContext('2d');
-            new Chart(ctxDona, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Empoderamiento', 'Paz', 'Permanencia'],
-                    datasets: [{
-                        data: Object.values(participantesPorEje),
-                        backgroundColor: colors,
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { color: '#4B5563', font: { family: 'Inter' } } }
-                    },
-                    cutout: '70%'
-                }
-            });
-
-            // Dibujar Barras
-            const ctxBarras = document.getElementById('chartEstados').getContext('2d');
-            new Chart(ctxBarras, {
-                type: 'bar',
-                data: {
-                    labels: ['Empoderamiento', 'Paz', 'Permanencia'],
-                    datasets: [
-                        { label: 'Aprobados', data: Object.values(estadosPorEje).map(e => e.Aprobado), backgroundColor: '#2E9E7A', borderRadius: 4 },
-                        { label: 'Borradores', data: Object.values(estadosPorEje).map(e => e.Borrador), backgroundColor: '#F5A623', borderRadius: 4 },
-                        { label: 'Rechazados', data: Object.values(estadosPorEje).map(e => e.Rechazado), backgroundColor: '#EF4444', borderRadius: 4 }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: '#E5E7EB' }, ticks: { stepSize: 1, color: '#4B5563' } },
-                        x: { grid: { display: false }, ticks: { color: '#4B5563', font: { family: 'Inter' } } }
-                    },
-                    plugins: { legend: { position: 'bottom', labels: { color: '#4B5563', font: { family: 'Inter' } } } }
-                }
-            });
-
-            // --- Lógica Alertas Inteligentes ---
-            const alertasDiv = document.getElementById('alertasInteligentes');
-            let htmlAlertas = '';
-
-            // Alerta 1: Felicidad por Avance Global
-            if (avanceGlobal >= 80) {
-                htmlAlertas += `<div class="alert alert-success" style="margin-bottom: 0;"><strong>🏆 ¡Excelente trabajo!</strong> Has superado el 80% de la meta global de recolección de capturas. ¡Sigue así!</div>`;
-            } else if (avanceGlobal < 30 && totalCapturas > 0) {
-                htmlAlertas += `<div class="alert alert-warning" style="margin-bottom: 0;"><strong>⚠️ Atención:</strong> El avance global es bajo (${avanceGlobal}%). Te recomendamos acelerar las salidas a terreno.</div>`;
-            }
-
-            // Alerta 2: Correcciones Pendientes (Rechazos)
-            const capturasRechazadas = capturas.filter(c => c.estado === 'Rechazado').length;
-            if (capturasRechazadas > 0) {
-                htmlAlertas += `<div class="alert alert-danger" style="margin-bottom: 0;"><strong>🛑 Acción requerida:</strong> Tienes ${capturasRechazadas} formulario(s) rechazado(s) por el coordinador. <b>Por favor corrígelos antes de sincronizar.</b></div>`;
-            }
-
-            // Alerta 3: Recordatorio Vacío o Éxito Local
-            if (totalCapturas === 0) {
-                htmlAlertas += `<div class="alert alert-info" style="margin-bottom: 0;"><strong>👋 ¡Bienvenido!</strong> Realiza tu primera captura de datos en terreno para empezar a ver las estadísticas.</div>`;
-            } else if (pendientesSync >= 5) {
-                htmlAlertas += `<div class="alert alert-warning" style="margin-bottom: 0;"><strong>☁️ Advertencia de Nube:</strong> Tienes demasiados registros (${pendientesSync}) sin subir a la base de datos principal de la Fundación asegúrate de tener internet y hacer clic en SINCRONIZAR pronto.</div>`;
-            } else if (capturasRechazadas === 0 && totalCapturas > 0) {
-                htmlAlertas += `<div class="alert alert-info" style="margin-bottom: 0;"><strong>✓ Todo en orden:</strong> No tienes rechazos pendientes y los datos fluyen normalmente.</div>`;
-            }
-
-            alertasDiv.innerHTML = htmlAlertas;
-
-
-            // --- Cargar capturas recientes reales ---
-            const recentBody = document.getElementById('recentCaptures');
-            if (capturas.length === 0) {
-                recentBody.innerHTML = `
-                    <tr>
-                        <td colspan="4" class="text-center text-muted" style="padding: var(--space-xl) 0;">
-                            No hay capturas recientes. Los registros aparecerán aquí.
-                        </td>
-                    </tr>
-                `;
-            } else {
-                // Últimas 5 capturas
-                const recientes = [...capturas].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 5);
-
-                recentBody.innerHTML = recientes.map(c => {
-                    let badgeClass = 'badge-warning';
-                    if (c.estado === 'Aprobado') badgeClass = 'badge-success';
-                    if (c.estado === 'Rechazado') badgeClass = 'badge-danger';
+                    let objetivo = "";
+                    if (eje === 'Empoderamiento y Liderazgo Femenino')
+                        objetivo = "Fortalecer la agencia individual y colectiva de las niñas participantes.";
+                    else if (eje === 'Construcción de Paz y Territorio')
+                        objetivo = "Fomentar la cohesión social y la reducción de riesgos en zonas de conflicto.";
+                    else if (eje === 'Permanencia y Excelencia Deportiva')
+                        objetivo = "Garantizar la continuidad del proceso formativo y el desarrollo técnico.";
 
                     return `
-                    <tr>
-                        <td class="fw-500">${c.indicador_nombre}</td>
-                        <td class="text-sm text-muted">${new Date(c.fecha).toLocaleDateString('es-ES')}</td>
-                        <td class="text-center fw-600">${c.participantes ? c.participantes.length + ' part.' : (c.conteo?.actual || 1)}</td>
-                        <td><span class="badge ${badgeClass}">${c.estado}</span></td>
-                    </tr>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="badge badge-purple">${eje}</span>
+                        </div>
+                        <h3 style="margin-bottom: 4px;">${eje}</h3>
+                        <p class="text-xs text-muted" style="margin-bottom: var(--space-md); line-height: 1.4;">
+                            ${objetivo}
+                        </p>
+                        <div class="progress-container">
+                            <div class="progress-header">
+                                <span class="progress-label">Avance Eje</span>
+                                <span class="progress-value">${avanceEje}%</span>
+                            </div>
+                            <div class="progress-track">
+                                <div class="progress-fill" style="width: ${avanceEje}%"></div>
+                            </div>
+                        </div>
+                        <p class="text-sm text-muted" style="margin-top: var(--space-md);">
+                            ${inds.length} indicadores activos. (${capturasDelEje} registros)
+                        </p>
+                        <button class="btn btn-ghost btn-sm btn-full" style="margin-top: var(--space-md);" onclick="location.href='captura.html?eje=${encodeURIComponent(eje)}'">
+                            Ver Indicadores
+                        </button>
+                    </div>
                 `}).join('');
+
+                // --- Lógica Visual de Gráficos (Chart.js) ---
+                if (typeof Chart === 'undefined') {
+                    console.error('Chart.js no está cargado.');
+                    throw new Error('Motor de gráficos no disponible.');
+                }
+
+                const participantesPorEje = {
+                    'Empoderamiento y Liderazgo Femenino': 0,
+                    'Construcción de Paz y Territorio': 0,
+                    'Permanencia y Excelencia Deportiva': 0
+                };
+
+                const estadosPorEje = {
+                    'Empoderamiento y Liderazgo Femenino': { Aprobado: 0, Borrador: 0, Rechazado: 0 },
+                    'Construcción de Paz y Territorio': { Aprobado: 0, Borrador: 0, Rechazado: 0 },
+                    'Permanencia y Excelencia Deportiva': { Aprobado: 0, Borrador: 0, Rechazado: 0 }
+                };
+
+                capturas.forEach(c => {
+                    let sumaParcial = 0;
+                    if (c.tipo === 'retencion' && c.conteo && c.conteo.total) {
+                        sumaParcial = c.conteo.total;
+                    } else if ((c.tipo === 'escala' || c.tipo === 'binario') && c.participantes) {
+                        sumaParcial = c.participantes.length;
+                    }
+
+                    if (participantesPorEje[c.eje] !== undefined) participantesPorEje[c.eje] += sumaParcial;
+                    if (estadosPorEje[c.eje] && estadosPorEje[c.eje][c.estado] !== undefined) {
+                        estadosPorEje[c.eje][c.estado]++;
+                    }
+                });
+
+                const colors = ['#7B35C4', '#2E9E7A', '#F5A623'];
+
+                const ctxDona = document.getElementById('chartEjes').getContext('2d');
+                new Chart(ctxDona, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Empoderamiento', 'Paz', 'Permanencia'],
+                        datasets: [{
+                            data: Object.values(participantesPorEje),
+                            backgroundColor: colors,
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { color: '#4B5563', font: { family: 'Inter' } } }
+                        },
+                        cutout: '70%'
+                    }
+                });
+
+                const ctxBarras = document.getElementById('chartEstados').getContext('2d');
+                new Chart(ctxBarras, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Empoderamiento', 'Paz', 'Permanencia'],
+                        datasets: [
+                            { label: 'Aprobados', data: Object.values(estadosPorEje).map(e => e.Aprobado), backgroundColor: '#2E9E7A', borderRadius: 4 },
+                            { label: 'Borradores', data: Object.values(estadosPorEje).map(e => e.Borrador), backgroundColor: '#F5A623', borderRadius: 4 },
+                            { label: 'Rechazados', data: Object.values(estadosPorEje).map(e => e.Rechazado), backgroundColor: '#EF4444', borderRadius: 4 }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: '#E5E7EB' }, ticks: { stepSize: 1, color: '#4B5563' } },
+                            x: { grid: { display: false }, ticks: { color: '#4B5563', font: { family: 'Inter' } } }
+                        },
+                        plugins: { legend: { position: 'bottom', labels: { color: '#4B5563', font: { family: 'Inter' } } } }
+                    }
+                });
+
+                // --- Lógica Alertas Inteligentes ---
+                const alertasDiv = document.getElementById('alertasInteligentes');
+                let htmlAlertas = '';
+
+                if (avanceGlobal >= 80) {
+                    htmlAlertas += `<div class="alert alert-success"><strong>🏆 ¡Excelente trabajo!</strong> Has superado el 80% de la meta global.</div>`;
+                } else if (avanceGlobal < 30 && totalCapturas > 0) {
+                    htmlAlertas += `<div class="alert alert-warning"><strong>⚠️ Atención:</strong> El avance global es bajo (${avanceGlobal}%).</div>`;
+                }
+
+                const capturasRechazadas = capturas.filter(c => c.estado === 'Rechazado').length;
+                if (capturasRechazadas > 0) {
+                    htmlAlertas += `<div class="alert alert-danger"><strong>🛑 Acción requerida:</strong> Tienes ${capturasRechazadas} formulario(s) rechazado(s).</div>`;
+                }
+
+                if (totalCapturas === 0) {
+                    htmlAlertas += `<div class="alert alert-info"><strong>👋 ¡Bienvenido!</strong> Realiza tu primera captura de datos para empezar.</div>`;
+                } else if (pendientesSync >= 5) {
+                    htmlAlertas += `<div class="alert alert-warning"><strong>☁️ Pendientes:</strong> Tienes ${pendientesSync} registros sin sincronizar.</div>`;
+                } else if (capturasRechazadas === 0 && totalCapturas > 0) {
+                    htmlAlertas += `<div class="alert alert-info"><strong>✓ Todo en orden:</strong> Los datos fluyen normalmente.</div>`;
+                }
+                alertasDiv.innerHTML = htmlAlertas;
+
+                // --- Cargar capturas recientes reales ---
+                const recentBody = document.getElementById('recentCaptures');
+                if (capturas.length === 0) {
+                    recentBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">No hay capturas recientes.</td></tr>`;
+                } else {
+                    const recientes = [...capturas].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 5);
+                    recentBody.innerHTML = recientes.map(c => {
+                        let badgeClass = 'badge-warning';
+                        if (c.estado === 'Aprobado') badgeClass = 'badge-success';
+                        if (c.estado === 'Rechazado') badgeClass = 'badge-danger';
+
+                        let valorVisual = '-';
+                        if (c.conteo) valorVisual = `<strong>${c.conteo.total}</strong> participantes`;
+                        else if (c.participantes) valorVisual = `<strong>${c.participantes.length}</strong> participantes`;
+
+                        return `
+                        <tr>
+                            <td class="fw-500">${c.indicador_nombre}</td>
+                            <td class="text-sm text-muted">${new Date(c.fecha).toLocaleDateString('es-ES')}</td>
+                            <td class="text-center">${valorVisual}</td>
+                            <td><span class="badge ${badgeClass}">${c.estado}</span></td>
+                        </tr>
+                    `}).join('');
+                }
+            } catch (error) {
+                console.error('Error cargando el dashboard:', error);
+                grid.innerHTML = `
+                    <div class="card" style="grid-column: span 3; border: 2px dashed var(--danger); background: rgba(239, 68, 68, 0.05);">
+                        <div class="text-center" style="padding: var(--space-xl);">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">❌</div>
+                            <h3 class="text-danger">Error al cargar datos</h3>
+                            <p class="text-secondary">${error.message || 'Error interno de IndexedDB o Red.'}</p>
+                            <button class="btn btn-primary" style="margin-top: 1rem;" onclick="location.reload()">Reintentar</button>
+                        </div>
+                    </div>
+                `;
             }
-        } // <-- Cierre correcto de loadDashboardData
+        }
 
         loadDashboardData();
 
-            document.getElementById('btnNuevaCaptura')?.addEventListener('click', () => {
-                window.location.href = 'captura.html';
-            });
+        document.getElementById('btnNuevaCaptura')?.addEventListener('click', () => {
+            window.location.href = 'captura.html';
+        });
     </script>
 </body>
 

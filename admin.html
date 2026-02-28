@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configuración | Sistema MEAL +PaZion</title>
-    <link rel="stylesheet" href="css/main.css?v=8">
+    <link rel="stylesheet" href="css/main.css?v=11">
     <style>
         .tab-nav {
             display: flex;
@@ -129,7 +129,7 @@
                     </div>
                     <div class="stat-mini">
                         <div class="stat-mini-value" id="statPending">—</div>
-                        <div class="stat-mini-label">Pendientes Validación</div>
+                        <div class="stat-mini-label">En Borrador</div>
                     </div>
                 </div>
 
@@ -349,8 +349,8 @@
     </div>
 
     <script type="module">
-        import { initUI, showToast } from './js/app.js?v=8';
-        import { initDB, getAllData, addData, updateData, ensureDataSeeded } from './js/db.js?v=8';
+        import { initUI, showToast } from './js/app.js?v=11';
+        import { initDB, getAllData, addData, updateData, ensureDataSeeded } from './js/db.js?v=11';
 
         initUI();
 
@@ -373,7 +373,7 @@
             document.getElementById('statIndicators').textContent = allIndicators.length;
             document.getElementById('statCaptures').textContent = allCaptures.length;
             document.getElementById('statPending').textContent = allCaptures.filter(c => c.estado === 'Pendiente').length;
-            document.getElementById('dbVersionInfo').textContent = 'PazionMEAL v4';
+            document.getElementById('dbVersionInfo').textContent = 'PazionMEAL v8';
             document.getElementById('dbLastUpdate').textContent = new Date().toLocaleDateString('es-ES');
 
             renderUsers();

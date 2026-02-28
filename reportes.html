@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reportes | Sistema MEAL +PaZion</title>
-    <link rel="stylesheet" href="css/main.css?v=4">
+    <link rel="stylesheet" href="css/main.css?v=11">
     <!-- jspdf and html2canvas for PDF export -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -94,8 +94,9 @@
                             <label class="form-label">Estado de Validación</label>
                             <select id="filterStatus" class="form-control">
                                 <option value="all">Todos</option>
-                                <option value="Aprobado">Solo Aprobados</option>
-                                <option value="Pendiente">Pendientes</option>
+                                <option value="Aprobado">Aprobados</option>
+                                <option value="Borrador">Borradores</option>
+                                <option value="Rechazado">Rechazados</option>
                             </select>
                         </div>
                     </div>
@@ -106,7 +107,7 @@
                     <!-- Encabezado Institucional -->
                     <div class="text-center" style="margin-bottom: var(--space-2xl);">
                         <img src="assets/img/logo.png" alt="+PaZion"
-                            style="height: 60px; margin: 0 auto var(--space-md); filter: grayscale(1) brightness(2);"
+                            style="height: 60px; margin: 0 auto var(--space-md); filter: grayscale(1) brightness(0.2);"
                             onerror="this.src='https://placehold.co/150x60/0D0718/7B35C4?text=+PaZion'">
                         <h2 style="font-size: 24px; color: var(--text-primary);">Reporte Consolidado MEAL</h2>
                         <p class="text-muted">Fundación +PaZion / Goles de Vida</p>
@@ -139,7 +140,7 @@
                             </div>
                             <div
                                 style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-top: 4px;">
-                                Pendientes</div>
+                                En Borrador</div>
                         </div>
                         <div
                             style="background: rgba(59,130,246,0.08); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border); text-align: center;">
@@ -188,8 +189,8 @@
     </div>
 
     <script type="module">
-        import { initUI, showToast } from './js/app.js?v=4';
-        import { initDB, getAllData, ensureDataSeeded } from './js/db.js?v=4';
+        import { initUI, showToast } from './js/app.js?v=11';
+        import { initDB, getAllData, ensureDataSeeded } from './js/db.js?v=11';
 
         initUI();
 
@@ -258,11 +259,11 @@
 
             // KPIs
             const aprobados = filteredCaptures.filter(c => c.estado === 'Aprobado');
-            const pendientes = filteredCaptures.filter(c => c.estado === 'Pendiente');
+            const borradores = filteredCaptures.filter(c => c.estado === 'Borrador');
             const withData = new Set(filteredCaptures.map(c => c.indicador_id)).size;
             document.getElementById('kpiTotal').textContent = filteredCaptures.length;
             document.getElementById('kpiAprobados').textContent = aprobados.length;
-            document.getElementById('kpiPendientes').textContent = pendientes.length;
+            document.getElementById('kpiPendientes').textContent = borradores.length;
             document.getElementById('kpiIndicadores').textContent = withData;
 
             // Tabla de indicadores
@@ -277,7 +278,7 @@
                         <td><span class="text-xs text-muted">${ind.eje}</span></td>
                         <td class="text-sm">${ind.meta}</td>
                         <td class="text-center"><strong>${caps.length}</strong></td>
-                        <td class="text-center"><span style="color: var(--green-400); font-weight: 700;">${app.length}</span></td>
+                        <td class="text-center"><span style="color: var(--green-700); font-weight: 700;">${app.length}</span></td>
                         <td>
                             <span class="badge ${tieneDatos ? (app.length > 0 ? 'badge-success' : 'badge-warning') : ''}">
                                 ${tieneDatos ? (app.length > 0 ? `✅ ${app.length} Aprobado${app.length > 1 ? 's' : ''}` : '⏳ Pendiente Revisión') : '—Sin Registros'}
@@ -304,22 +305,26 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Técnico</th>
-                                    <th>Indicador</th>
-                                    <th>Valor</th>
                                     <th>Fecha</th>
+                                    <th>Indicador</th>
+                                    <th>Eje</th>
+                                    <th>Impacto</th>
                                     <th>Estado</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${recent.map(c => {
                     const ind = indicadores.find(i => i.id === c.indicador_id);
+                    let valorVisual = '-';
+                    if (c.conteo) valorVisual = `<strong>${c.conteo.total}</strong> participantes`;
+                    else if (c.participantes) valorVisual = `<strong>${c.participantes.length}</strong> participantes`;
+
                     return `
                                         <tr>
-                                            <td>${c.usuario_nombre || '—'}</td>
-                                            <td>${ind ? ind.nombre : 'Desconocido'}</td>
-                                            <td><strong>${c.valor}</strong></td>
                                             <td class="text-sm text-muted">${new Date(c.fecha).toLocaleDateString('es-ES')}</td>
+                                            <td>${ind ? ind.nombre : 'Desconocido'}</td>
+                                            <td><span class="text-xs text-muted">${c.eje || '—'}</span></td>
+                                            <td>${valorVisual}</td>
                                             <td><span class="badge ${c.estado === 'Aprobado' ? 'badge-success' : c.estado === 'Rechazado' ? 'badge-danger' : 'badge-warning'}">${c.estado}</span></td>
                                         </tr>
                                     `;
