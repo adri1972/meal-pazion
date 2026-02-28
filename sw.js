@@ -4,7 +4,7 @@
  * Permite el funcionamiento offline cacheando los assets esenciales.
  */
 
-const CACHE_NAME = 'pazion-meal-v7-forceupdate';
+const CACHE_NAME = 'pazion-meal-v8-forceupdate';
 const ASSETS = [
     './',
     './index.html',
@@ -19,7 +19,8 @@ const ASSETS = [
     './js/auth.js',
     './js/db.js',
     './js/firma.js',
-    './manifest.json'
+    './manifest.json',
+    './assets/docs/Guia_Rapida_Captura_PaZion.pdf'
 ];
 
 // Instalación: Cachear assets y forzar activación inmediata
