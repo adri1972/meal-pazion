@@ -263,14 +263,25 @@
                             indicadores hasta la sincronización de datos sin conexión a internet.
                         </p>
 
-                        <!-- Reproductor Embebido de Spotify Garantizado -->
-                        <div style="margin-top: var(--space-xl); width: 100%; max-width: 600px;">
-                            <iframe style="border-radius:12px"
-                                src="https://open.spotify.com/embed/episode/7makk4oTQel546B0PZlVR5?utm_source=generator"
-                                width="100%" height="152" frameBorder="0" allowfullscreen=""
-                                allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                                loading="lazy">
-                            </iframe>
+                        <!-- Reproductor de Audio (Modo Demo/Simulador) -->
+                        <div class="audio-player">
+                            <button class="btn-play" id="btnPlayPause">
+                                ▶
+                            </button>
+                            <span class="time-display" id="currentTime">0:00</span>
+                            <div class="progress-bar" id="progressBar">
+                                <div class="progress-fill" id="progressFill"></div>
+                                <div class="progress-handle" id="progressHandle"></div>
+                            </div>
+                            <span class="time-display" id="durationTime">5:30</span>
+
+                            <!-- Control de Volumen (Decorativo) -->
+                            <div class="volume-container"
+                                style="display: flex; align-items: center; gap: 8px; margin-left: 12px; padding-left: 12px; border-left: 1px solid rgba(255,255,255,0.2);">
+                                <span id="btnMute" style="cursor: pointer; font-size: 16px;">🔊</span>
+                                <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1"
+                                    style="width: 60px; height: 4px; accent-color: white; cursor: pointer;">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -375,23 +386,92 @@
         // Inicializar barra lateral y superior de forma segura
         document.addEventListener('DOMContentLoaded', () => {
             initUI();
-        });
 
-        // El control de audio ahora es manejado íntegramente por el Iframe embebido de Spotify
-        // Las notas interactivas mantienen su funcionalidad visual a manera de ejemplo
+            // --- Lógica del Reproductor Simulado (DEMO) ---
+            // Ya que los navegadores bloquean sistemáticamente audios externos y el Iframe falló en tu entorno,
+            // hemos vuelto al diseño hermoso original y programado un "simulador" que muestra 
+            // visualmente cómo funcionará cuando el archivo MP3 sea alojado localmente.
+            const btnPlayPause = document.getElementById('btnPlayPause');
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            const currentTimeEl = document.getElementById('currentTime');
 
-        // Clic en los timestamps de las notas
-        document.querySelectorAll('.timestamp').forEach(badge => {
-            badge.addEventListener('click', () => {
-                // Animación visual de feedback en la nota
-                const noteContent = badge.nextElementSibling;
-                noteContent.style.transition = 'background 0.3s';
-                noteContent.style.background = 'rgba(123, 53, 196, 0.1)';
-                noteContent.style.padding = '8px';
-                noteContent.style.borderRadius = '8px';
-                setTimeout(() => {
-                    noteContent.style.background = 'transparent';
-                }, 1500);
+            let isPlaying = false;
+            let currentSeconds = 0;
+            const totalDuration = 330; // 5 minutos 30 segundos
+            let intervalId = null;
+
+            function formatTime(totalSeconds) {
+                const mins = Math.floor(totalSeconds / 60);
+                const secs = Math.floor(totalSeconds % 60);
+                return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            }
+
+            function updatePlayerUI() {
+                currentTimeEl.textContent = formatTime(currentSeconds);
+                const percent = (currentSeconds / totalDuration) * 100;
+                progressFill.style.width = `${percent}%`;
+            }
+
+            function playSimulatedAudio() {
+                if (currentSeconds >= totalDuration) currentSeconds = 0;
+
+                intervalId = setInterval(() => {
+                    currentSeconds += 1; // Adelanta 1 segundo
+                    updatePlayerUI();
+
+                    if (currentSeconds >= totalDuration) {
+                        pauseSimulatedAudio();
+                        currentSeconds = 0;
+                        updatePlayerUI();
+                    }
+                }, 1000); // Se actualiza cada 1000ms (1 segundo real)
+
+                btnPlayPause.innerHTML = '⏸';
+                isPlaying = true;
+            }
+
+            function pauseSimulatedAudio() {
+                clearInterval(intervalId);
+                btnPlayPause.innerHTML = '▶';
+                isPlaying = false;
+            }
+
+            // Alternar Play/Pause
+            btnPlayPause.addEventListener('click', () => {
+                if (isPlaying) pauseSimulatedAudio();
+                else playSimulatedAudio();
+            });
+
+            // Adelantar haciendo click en la barra
+            progressBar.addEventListener('click', (e) => {
+                const rect = progressBar.getBoundingClientRect();
+                const pos = (e.clientX - rect.left) / rect.width;
+                currentSeconds = Math.floor(pos * totalDuration);
+                updatePlayerUI();
+            });
+
+            // Clic en los timestamps de las notas (salta al tiempo específico)
+            document.querySelectorAll('.timestamp').forEach(badge => {
+                badge.addEventListener('click', () => {
+                    const timeStr = badge.dataset.time;
+                    if (timeStr) {
+                        currentSeconds = parseInt(timeStr, 10);
+                        updatePlayerUI();
+
+                        if (!isPlaying) playSimulatedAudio();
+
+                        // Animación interactiva de la nota conectada
+                        const noteContent = badge.nextElementSibling;
+                        noteContent.style.transition = 'background 0.3s';
+                        noteContent.style.background = 'rgba(123, 53, 196, 0.1)';
+                        noteContent.style.padding = '8px';
+                        noteContent.style.borderRadius = '8px';
+                        setTimeout(() => {
+                            noteContent.style.background = 'transparent';
+                        }, 1500);
+                    }
+                });
             });
         });
     </script>
