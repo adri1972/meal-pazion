@@ -15,6 +15,34 @@ export function initUI() {
   renderSidebar(user);
   renderTopbar(user);
   initOfflineDetection();
+  forceSystemUpdate();
+}
+
+/**
+ * Función nuclear para limpiar cachés rebeldes y service workers antiguos.
+ */
+async function forceSystemUpdate() {
+  const CURRENT_VER = 'v11-nuclear';
+  if (localStorage.getItem('pazion_system_version') === CURRENT_VER) return;
+
+  console.warn('Detectada versión antigua. Iniciando limpieza profunda de caché...');
+
+  if ('serviceWorker' in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    for (let registration of registrations) {
+      // Unregister everything to start clean
+      await registration.unregister();
+    }
+  }
+
+  if ('caches' in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map(key => caches.delete(key)));
+  }
+
+  localStorage.setItem('pazion_system_version', CURRENT_VER);
+  console.log('Limpieza completada. Recargando sistema...');
+  window.location.reload();
 }
 
 /**

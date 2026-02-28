@@ -62,7 +62,7 @@
         // Register Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js?v=11')
+                navigator.serviceWorker.register('./sw-v11.js')
                     .then(reg => console.log('SW registrado', reg))
                     .catch(err => console.log('SW error', err));
             });
