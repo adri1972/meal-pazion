@@ -130,16 +130,70 @@
             await initDB();
             await ensureDataSeeded(); // Garantiza que siempre haya datos
             const indicadores = await getAllData('indicadores');
+            const capturas = await getAllData('capturas');
             const grid = document.getElementById('proyectosGrid');
 
-            // Agrupar indicadores por eje
+            // --- Cálculos Globales ---
+            const totalCapturas = capturas.length;
+            const pendientesSync = capturas.filter(c => c.sync_status === 'Pending').length;
+
+            // Participantes (suma de inscritas en retencion + total encuestadas)
+            let totalParticipantes = 0;
+            // Comunidades (simulado por ahora como ubicaciones únicas GPS aproximado)
+            const comunidadesUnicas = new Set();
+
+            let capturasExitosas = 0; // Para calcular un avance global simulado basado en capturas aprobadas o que lograron meta
+
+            capturas.forEach(c => {
+                if (c.gps && c.gps.lat) {
+                    // Redondear a 2 decimales para agrupar (aprox 1km)
+                    comunidadesUnicas.add(`${c.gps.lat.toFixed(2)},${c.gps.lng.toFixed(2)}`);
+                }
+
+                if (c.tipo === 'retencion' && c.conteo && c.conteo.total) {
+                    totalParticipantes += c.conteo.total;
+                } else if ((c.tipo === 'escala' || c.tipo === 'binario') && c.participantes) {
+                    totalParticipantes += c.participantes.length;
+                }
+
+                if (c.estado === 'Aprobado') capturasExitosas++;
+            });
+
+            // Simulamos un % de avance basado en el volumen de capturas (ej. meta 100 capturas)
+            const metaCapturasGlobal = 100;
+            const avanceGlobal = Math.min(100, Math.round((totalCapturas / metaCapturasGlobal) * 100));
+
+            // Actualizar UI
+            document.getElementById('globalAvance').textContent = `${avanceGlobal}%`;
+            document.getElementById('totalParticipantes').textContent = totalParticipantes;
+            document.getElementById('totalComunidades').textContent = Math.max(1, comunidadesUnicas.size + (totalCapturas > 0 ? 1 : 0)); // Al menos 1 si hay capturas
+
+            const syncEl = document.getElementById('pendientesSync');
+            const syncStatusEl = document.getElementById('syncStatus');
+            syncEl.textContent = pendientesSync;
+            if (pendientesSync > 0) {
+                syncEl.style.color = 'var(--warning)';
+                syncStatusEl.textContent = 'Requiere conexión';
+            } else {
+                syncEl.style.color = 'var(--info)';
+                syncStatusEl.textContent = 'Al día';
+            }
+
+
+            // --- Agrupar indicadores por eje ---
             const ejes = {};
             indicadores.forEach(ind => {
                 if (!ejes[ind.eje]) ejes[ind.eje] = [];
                 ejes[ind.eje].push(ind);
             });
 
-            grid.innerHTML = Object.entries(ejes).map(([eje, inds]) => `
+            grid.innerHTML = Object.entries(ejes).map(([eje, inds]) => {
+                // Calcular avance por eje (basado en proporción de capturas al indicador)
+                const capturasDelEje = capturas.filter(c => c.eje === eje).length;
+                const metaEje = inds.length * 5; // Simular que se esperan 5 capturas por indicador
+                const avanceEje = Math.min(100, Math.round((capturasDelEje / metaEje) * 100)) || 0;
+
+                return `
                 <div class="card">
                     <div class="card-header">
                         <span class="badge badge-purple">${eje}</span>
@@ -148,30 +202,49 @@
                     <div class="progress-container">
                         <div class="progress-header">
                             <span class="progress-label">Avance Eje</span>
-                            <span class="progress-value">0%</span>
+                            <span class="progress-value">${avanceEje}%</span>
                         </div>
                         <div class="progress-track">
-                            <div class="progress-fill" style="width: 0%"></div>
+                            <div class="progress-fill" style="width: ${avanceEje}%"></div>
                         </div>
                     </div>
                     <p class="text-sm text-muted" style="margin-top: var(--space-md);">
-                        ${inds.length} indicadores activos en este eje estratégicos.
+                        ${inds.length} indicadores activos en este eje estratégicos. (${capturasDelEje} registros)
                     </p>
                     <button class="btn btn-ghost btn-sm btn-full" style="margin-top: var(--space-md);" onclick="location.href='captura.html?eje=${encodeURIComponent(eje)}'">
                         Ver Indicadores
                     </button>
                 </div>
-            `).join('');
+            `}).join('');
 
-            // Cargar capturas recientes ficticias para demo
+            // --- Cargar capturas recientes reales ---
             const recentBody = document.getElementById('recentCaptures');
-            recentBody.innerHTML = `
-                <tr>
-                    <td colspan="4" class="text-center text-muted" style="padding: var(--space-xl) 0;">
-                        No hay capturas recientes. Los registros aparecerán aquí.
-                    </td>
-                </tr>
-            `;
+            if (capturas.length === 0) {
+                recentBody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center text-muted" style="padding: var(--space-xl) 0;">
+                            No hay capturas recientes. Los registros aparecerán aquí.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                // Últimas 5 capturas
+                const recientes = [...capturas].sort((a, b) => new Date(b.fecha) - new Date(a.fecha)).slice(0, 5);
+
+                recentBody.innerHTML = recientes.map(c => {
+                    let badgeClass = 'badge-warning';
+                    if (c.estado === 'Aprobado') badgeClass = 'badge-success';
+                    if (c.estado === 'Rechazado') badgeClass = 'badge-danger';
+
+                    return `
+                    <tr>
+                        <td class="fw-500">${c.indicador_nombre}</td>
+                        <td class="text-sm text-muted">${new Date(c.fecha).toLocaleDateString('es-ES')}</td>
+                        <td class="text-center fw-600">${c.participantes ? c.participantes.length + ' part.' : (c.conteo?.actual || 1)}</td>
+                        <td><span class="badge ${badgeClass}">${c.estado}</span></td>
+                    </tr>
+                `}).join('');
+            }
         }
 
         loadDashboardData();

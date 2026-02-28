@@ -31,6 +31,7 @@ function renderSidebar(user) {
     { label: 'Captura de Datos', icon: '📝', path: 'captura.html', roles: ['Administrador', 'Coordinador de Proyecto', 'Técnico de Campo'] },
     { label: 'Validación', icon: '✅', path: 'validacion.html', roles: ['Administrador', 'Coordinador de Proyecto'], badge: 3 },
     { label: 'Reportes', icon: '📈', path: 'reportes.html', roles: ['Administrador', 'Coordinador de Proyecto'] },
+    { label: 'Capacitación', icon: '🎧', path: 'capacitacion.html', roles: ['Administrador', 'Coordinador de Proyecto', 'Técnico de Campo'] },
     { label: 'Configuración', icon: '⚙️', path: 'admin.html', roles: ['Administrador'] }
   ];
 

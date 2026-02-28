@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capacitación | Sistema MEAL +PaZion</title>
+    <link rel="stylesheet" href="css/main.css?v=8">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        .podcast-header {
+            background: linear-gradient(135deg, var(--purple-600), #581c87);
+            border-radius: var(--radius-xl);
+            padding: var(--space-2xl);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: var(--space-xl);
+            box-shadow: 0 10px 25px -5px rgba(123, 53, 196, 0.4);
+            position: relative;
+            overflow: hidden;
+            margin-bottom: var(--space-2xl);
+        }
+
+        .podcast-header::before {
+            content: '';
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            width: 250px;
+            height: 250px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+            border-radius: 50%;
+        }
+
+        .podcast-cover {
+            width: 160px;
+            height: 160px;
+            border-radius: var(--radius-lg);
+            background: #1e1b4b;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 64px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            border: 4px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .podcast-info {
+            flex: 1;
+            z-index: 1;
+        }
+
+        .podcast-badge {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(4px);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: inline-block;
+            margin-bottom: var(--space-sm);
+        }
+
+        .podcast-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: var(--space-xs);
+            line-height: 1.2;
+        }
+
+        .podcast-meta {
+            font-size: 14px;
+            opacity: 0.8;
+            margin-bottom: var(--space-md);
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        /* Reproductor de Audio Custom */
+        .audio-player {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-full);
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-top: var(--space-lg);
+        }
+
+        .btn-play {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: white;
+            color: var(--purple-600);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .btn-play:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: white;
+            border-radius: 3px;
+            width: 0%;
+        }
+
+        .progress-handle {
+            position: absolute;
+            right: -6px;
+            top: -3px;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .progress-bar:hover .progress-handle {
+            opacity: 1;
+        }
+
+        .time-display {
+            font-size: 13px;
+            font-variant-numeric: tabular-nums;
+            opacity: 0.9;
+            min-width: 45px;
+            text-align: right;
+        }
+
+        /* Notas del Episodio */
+        .show-notes {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-xl);
+        }
+
+        .timestamp {
+            display: inline-block;
+            background: rgba(123, 53, 196, 0.1);
+            color: var(--purple-400);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-variant-numeric: tabular-nums;
+            font-weight: 600;
+            font-size: 13px;
+            margin-right: var(--space-sm);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .timestamp:hover {
+            background: rgba(123, 53, 196, 0.2);
+        }
+
+        .note-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: var(--space-md);
+            padding-bottom: var(--space-md);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .note-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .note-content {
+            flex: 1;
+        }
+
+        .note-content h4 {
+            margin: 0 0 4px 0;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+
+        .note-content p {
+            margin: 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .podcast-header {
+                flex-direction: column;
+                text-align: center;
+                padding: var(--space-lg);
+            }
+
+            .podcast-meta {
+                justify-content: center;
+            }
+
+            .audio-player {
+                padding: 12px;
+                gap: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar"></aside>
+
+        <main class="main-content">
+            <header class="topbar"></header>
+
+            <div class="page-wrapper">
+                <!-- Header del Podcast -->
+                <div class="podcast-header">
+                    <div class="podcast-cover">
+                        🎧
+                    </div>
+                    <div class="podcast-info">
+                        <span class="podcast-badge">Episodio 1</span>
+                        <h1 class="podcast-title">Guía de Inicio: Captura de Datos en Campo</h1>
+                        <div class="podcast-meta">
+                            <span>🎙️ Voces de +PaZion</span>
+                            <span>⏳ 5:30 min</span>
+                            <span>📅 Febrero 2026</span>
+                        </div>
+                        <p style="opacity: 0.9; max-width: 600px; font-size: 15px; margin: 0;">
+                            Aprende todo lo necesario para utilizar la Matriz de Monitoreo MEAL. Desde cómo seleccionar
+                            indicadores hasta la sincronización de datos sin conexión a internet.
+                        </p>
+
+                        <!-- Audio Element Oculto (Usaremos un placeholder por ahora) -->
+                        <audio id="podcastAudio"
+                            src="https://actions.google.com/sounds/v1/speech/female_voiceover_01.ogg"
+                            preload="metadata"></audio>
+
+                        <div class="audio-player">
+                            <button class="btn-play" id="btnPlayPause">
+                                ▶ <!-- o ⏸ -->
+                            </button>
+                            <span class="time-display" id="currentTime">0:00</span>
+                            <div class="progress-bar" id="progressBar">
+                                <div class="progress-fill" id="progressFill"></div>
+                                <div class="progress-handle" id="progressHandle"></div>
+                            </div>
+                            <span class="time-display" id="durationTime">5:30</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notas del Episodio -->
+                <div class="grid grid-2" style="align-items: start; gap: var(--space-xl);">
+
+                    <div class="show-notes">
+                        <h3 style="margin-bottom: var(--space-lg); display: flex; align-items: center; gap: 8px;">
+                            📋 Notas del Episodio
+                        </h3>
+
+                        <div class="note-item">
+                            <span class="timestamp" data-time="0">0:00</span>
+                            <div class="note-content">
+                                <h4>Bienvenida y Conceptos Básicos</h4>
+                                <p>Introducción al sistema MEAL (Monitoreo, Evaluación, Aprendizaje y Lógica) y por qué
+                                    es vital para el programa "Goles de Vida".</p>
+                            </div>
+                        </div>
+
+                        <div class="note-item">
+                            <span class="timestamp" data-time="45">0:45</span>
+                            <div class="note-content">
+                                <h4>Paso 1: Seleccionando el Eje y el Indicador</h4>
+                                <p>Cómo navegar por los distintos ejes estratégicos (Empoderamiento, Construcción de
+                                    Paz, Permanencia Deportiva) y seleccionar el indicador correcto para la sesión del
+                                    día.</p>
+                            </div>
+                        </div>
+
+                        <div class="note-item">
+                            <span class="timestamp" data-time="120">2:00</span>
+                            <div class="note-content">
+                                <h4>Paso 2: Tipos de Encuestas</h4>
+                                <p>Explicación práctica de las encuestas de escala (1 al 10), encuestas de respuesta
+                                    directa (Sí/No) y cómo registrar el conteo para torneos o encuentros
+                                    interculturales.</p>
+                            </div>
+                        </div>
+
+                        <div class="note-item">
+                            <span class="timestamp" data-time="210">3:30</span>
+                            <div class="note-content">
+                                <h4>Paso 3: Evidencia y Firma</h4>
+                                <p>La importancia del botón de GPS, cómo cargar la foto de asistencia y el uso del
+                                    lienzo para la firma digital del técnico responsable.</p>
+                            </div>
+                        </div>
+
+                        <div class="note-item">
+                            <span class="timestamp" data-time="270">4:30</span>
+                            <div class="note-content">
+                                <h4>Trabajando Sin Internet (Offline-First)</h4>
+                                <p>¿Fuiste a una comunidad sin señal? No te preocupes. Explicamos cómo el sistema guarda
+                                    todo en tu dispositivo y cómo usar el botón "Sincronizar" al volver a la oficina.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recursos Adicionales -->
+                    <div>
+                        <div class="card" style="margin-bottom: var(--space-lg);">
+                            <h3 style="margin-bottom: var(--space-md);">📚 Recursos Adicionales</h3>
+                            <ul style="list-style: none; padding: 0; margin: 0;">
+                                <li style="margin-bottom: 12px;">
+                                    <a href="#" class="text-gradient fw-600"
+                                        style="display: flex; align-items: center; gap: 8px;">
+                                        <span>📄</span> Descargar Guía Rápida (PDF)
+                                    </a>
+                                </li>
+                                <li style="margin-bottom: 12px;">
+                                    <a href="#" class="text-gradient fw-600"
+                                        style="display: flex; align-items: center; gap: 8px;">
+                                        <span>📊</span> Catálogo de Indicadores MEAL
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="#" class="text-gradient fw-600"
+                                        style="display: flex; align-items: center; gap: 8px;">
+                                        <span>📞</span> Contactar Soporte Técino
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="alert alert-info" style="margin: 0;">
+                            <strong>💡 Tip:</strong> Puedes escuchar este audio mientras te desplazas hacia la
+                            comunidad. La página web seguirá reproduciéndolo en segundo plano en tu celular.
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { initUI } from './js/app.js?v=8';
+
+        // Inicializar barra lateral y superior
+        initUI();
+
+        // Lógica del Reproductor de Audio
+        const audio = document.getElementById('podcastAudio');
+        const btnPlayPause = document.getElementById('btnPlayPause');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const progressHandle = document.getElementById('progressHandle');
+        const currentTimeEl = document.getElementById('currentTime');
+        const durationTimeEl = document.getElementById('durationTime');
+
+        let isPlaying = false;
+
+        // Formatear tiempo (ej: 65 -> "1:05")
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return "0:00";
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+
+        // Cargar metadatos
+        audio.addEventListener('loadedmetadata', () => {
+            durationTimeEl.textContent = formatTime(audio.duration);
+        });
+
+        // Alternar Play/Pause
+        function togglePlay() {
+            if (isPlaying) {
+                audio.pause();
+                btnPlayPause.innerHTML = '▶';
+            } else {
+                audio.play();
+                btnPlayPause.innerHTML = '⏸';
+            }
+            isPlaying = !isPlaying;
+        }
+
+        btnPlayPause.addEventListener('click', togglePlay);
+
+        // Actualizar barra de progreso
+        audio.addEventListener('timeupdate', () => {
+            const percent = (audio.currentTime / audio.duration) * 100;
+            progressFill.style.width = `${percent}%`;
+            currentTimeEl.textContent = formatTime(audio.currentTime);
+
+            // Si el audio termina
+            if (audio.currentTime === audio.duration) {
+                isPlaying = false;
+                btnPlayPause.innerHTML = '▶';
+                progressFill.style.width = '0%';
+                audio.currentTime = 0;
+            }
+        });
+
+        // Clic en la barra para adelantar/atrasar
+        progressBar.addEventListener('click', (e) => {
+            const rect = progressBar.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            audio.currentTime = pos * audio.duration;
+        });
+
+        // Clic en los timestamps de las notas
+        document.querySelectorAll('.timestamp').forEach(badge => {
+            badge.addEventListener('click', () => {
+                const timeStr = badge.dataset.time;
+                if (timeStr) {
+                    audio.currentTime = parseInt(timeStr);
+                    if (!isPlaying) {
+                        togglePlay();
+                    }
+                    // Animación visual de feedback en la nota
+                    const noteContent = badge.nextElementSibling;
+                    noteContent.style.transition = 'background 0.3s';
+                    noteContent.style.background = 'rgba(123, 53, 196, 0.1)';
+                    noteContent.style.padding = '8px';
+                    noteContent.style.borderRadius = '8px';
+                    setTimeout(() => {
+                        noteContent.style.background = 'transparent';
+                    }, 1500);
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
