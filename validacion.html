@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Validación de Datos | Sistema MEAL +PaZion</title>
-    <link rel="stylesheet" href="css/main.css?v=8">
+    <link rel="stylesheet" href="css/main.css?v=11.2">
 </head>
 
 <body>
@@ -66,8 +66,8 @@
     </div>
 
     <script type="module">
-        import { initUI, showToast } from './js/app.js?v=8';
-        import { initDB, getAllData, updateData, getDataById } from './js/db.js?v=8';
+        import { initUI, showToast } from './js/app.js?v=11.2';
+        import { initDB, getAllData, updateData, getDataById } from './js/db.js?v=11.2';
 
         initUI();
 
@@ -132,7 +132,7 @@
                     </div>
                     <div>
                         <h4 class="text-muted text-sm uppercase fw-bold">Evidencia Fotográfica</h4>
-                        <img src="${currentRecord.foto_url || 'https://placehold.co/400x300/0D0718/7B35C4?text=Evidencia+Campo'}" style="width: 100%; border-radius: var(--radius-md); margin-top: 5px;">
+                        <img src="${currentRecord.foto || 'https://placehold.co/400x300/0D0718/7B35C4?text=Sin+Evidencia'}" style="width: 100%; border-radius: var(--radius-md); margin-top: 5px;">
                         
                         <h4 class="text-muted text-sm uppercase fw-bold" style="margin-top: var(--space-lg);">Ubicación GPS</h4>
                         <div style="background: var(--bg-card); padding: var(--space-md); border-radius: var(--radius-md); border: 1px solid var(--border); margin-top: 5px;">

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Captura de Datos | Sistema MEAL +PaZion</title>
-    <link rel="stylesheet" href="css/main.css?v=8">
+    <link rel="stylesheet" href="css/main.css?v=11.2">
     <style>
         .step {
             display: none;
@@ -249,7 +249,7 @@
                         <p class="text-secondary">Instrumento digital de campo — +PaZion MEAL</p>
                     </div>
                     <div class="flex items-center gap-sm">
-                        <span class="text-sm fw-600">Paso <span id="currentStepNum">1</span> de 3</span>
+                        <span class="text-sm fw-600">Paso <span id="currentStepNum">1</span> de 4</span>
                     </div>
                 </div>
 
@@ -371,6 +371,32 @@
                     <div class="flex justify-between" style="margin-top: var(--space-xl);">
                         <button onclick="goToStep(2)" class="btn btn-ghost">← Atrás</button>
                         <button id="btnGuardar" class="btn btn-primary btn-lg">💾 Guardar Sesión Completa</button>
+                    </div>
+                </div>
+
+                <!-- ══════════════════════════════════════════════════
+                     PASO 4: Constancia de Captura (Éxito)
+                ══════════════════════════════════════════════════ -->
+                <div id="step4" class="step">
+                    <div class="card text-center" style="padding: var(--space-xl);">
+                        <div style="font-size: 64px; margin-bottom: var(--space-md);">✅</div>
+                        <h2 class="text-gradient" style="margin-bottom: var(--space-sm);">¡Registro Exitoso!</h2>
+                        <p class="text-secondary" style="margin-bottom: var(--space-xl);">Se ha generado la constancia
+                            digital de monitoreo.</p>
+
+                        <div id="constanciaDetalle" class="card"
+                            style="text-align: left; background: rgba(255,255,255,0.03); border: 1px solid var(--border-accent); margin-bottom: var(--space-xl);">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+
+                        <div class="flex flex-col gap-md">
+                            <button id="btnImprimir" class="btn btn-secondary btn-full">🖨️ Imprimir / Guardar
+                                PDF</button>
+                            <button onclick="location.href='dashboard.html'" class="btn btn-ghost btn-full">🏠 Volver al
+                                Dashboard</button>
+                            <button onclick="location.reload()" class="btn btn-primary btn-full">➕ Nueva
+                                Captura</button>
+                        </div>
                     </div>
                 </div>
 
@@ -930,17 +956,31 @@
             const fotoEl = document.getElementById('photoPreview').querySelector('img');
             const foto = fotoEl ? fotoEl.src : null;
 
+            // Calcular valor para validación/reportes
+            let valorCalculado = "Ver detalle";
+            if (selectedInd.tipo === 'escala' || selectedInd.tipo === 'binario') {
+                const kpiValue = document.getElementById('resumenContent').querySelector('.kpi-value')?.textContent;
+                const kpiLabel = document.getElementById('resumenContent').querySelector('.kpi-label')?.textContent;
+                valorCalculado = `${kpiValue} ${kpiLabel}`;
+            } else if (selectedInd.tipo === 'conteo') {
+                valorCalculado = `${conteoData.actual || 0} registros`;
+            } else if (selectedInd.tipo === 'retencion') {
+                const kpiValue = document.getElementById('resumenContent').querySelector('.kpi-value')?.textContent;
+                valorCalculado = `${kpiValue} Retención`;
+            }
+
             const sesion = {
                 indicador_id: selectedInd.id,
                 indicador_nombre: selectedInd.nombre,
                 eje: selectedInd.eje,
                 tipo: selectedInd.tipo,
+                valor: valorCalculado, // Campo clave para reportes
                 usuario_id: user?.id,
                 usuario_nombre: user?.nombre,
                 fecha: new Date().toISOString(),
                 participantes: selectedInd.tipo === 'escala' || selectedInd.tipo === 'binario' ? participantes : [],
                 conteo: conteoData,
-                gps: gpsData,
+                gps: gpsData || { lat: 0, lng: 0, acc: 0 },
                 firma,
                 foto,
                 estado: 'Pendiente',
@@ -949,13 +989,51 @@
 
             try {
                 await addData('capturas', sesion);
-                showToast('✅ Sesión guardada exitosamente' + (!navigator.onLine ? ' (Offline)' : ''), 'success');
-                setTimeout(() => { window.location.href = 'dashboard.html'; }, 1800);
+                showToast('✅ Sesión guardada exitosamente', 'success');
+                mostrarConstancia(sesion);
+                goToStep(4);
             } catch (err) {
                 console.error(err);
                 showToast('❌ Error al guardar', 'error');
             }
         });
+
+        function mostrarConstancia(sesion) {
+            const container = document.getElementById('constanciaDetalle');
+            container.innerHTML = `
+                <div style="padding: var(--space-md); border-bottom: 1px solid var(--border);">
+                    <p style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Detalles del Registro</p>
+                    <h3 style="margin-top: 4px;">${sesion.indicador_nombre}</h3>
+                </div>
+                <div style="padding: var(--space-md); display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
+                    <div>
+                        <p class="text-xs text-muted">Técnico</p>
+                        <p class="text-sm fw-600">${sesion.usuario_nombre}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-muted">Fecha</p>
+                        <p class="text-sm fw-600">${new Date(sesion.fecha).toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-muted">Resultado</p>
+                        <p class="text-sm fw-600 text-gradient">${sesion.valor}</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-muted">GPS</p>
+                        <p class="text-sm fw-600">${sesion.gps.lat !== 0 ? '✅ Capturado' : '❌ No disponible'}</p>
+                    </div>
+                </div>
+                ${sesion.foto ? `
+                <div style="padding: var(--space-md); text-align: center; border-top: 1px solid var(--border);">
+                    <p class="text-xs text-muted" style="margin-bottom: 8px;">Evidencia Fotográfica</p>
+                    <img src="${sesion.foto}" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px;">
+                </div>` : ''}
+            `;
+
+            document.getElementById('btnImprimir').onclick = () => {
+                window.print();
+            };
+        }
 
         // ═══════════════════════════════════════════════════════════════
         // NAVEGACIÓN
@@ -968,6 +1046,7 @@
             if (step === 3 && !sigPad) {
                 setTimeout(() => { sigPad = new SignaturePad('signatureCanvas'); }, 150);
             }
+            window.scrollTo(0, 0);
         };
     </script>
 </body>
