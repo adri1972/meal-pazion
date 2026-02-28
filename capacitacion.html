@@ -278,6 +278,14 @@
                                 <div class="progress-handle" id="progressHandle"></div>
                             </div>
                             <span class="time-display" id="durationTime">5:30</span>
+
+                            <!-- Control de Volumen -->
+                            <div class="volume-container"
+                                style="display: flex; align-items: center; gap: 8px; margin-left: 12px; padding-left: 12px; border-left: 1px solid rgba(255,255,255,0.2);">
+                                <span id="btnMute" style="cursor: pointer; font-size: 16px;">🔊</span>
+                                <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="1"
+                                    style="width: 60px; height: 4px; accent-color: white; cursor: pointer;">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -401,9 +409,15 @@
             return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
         }
 
+        // Elementos de volumen
+        const volumeSlider = document.getElementById('volumeSlider');
+        const btnMute = document.getElementById('btnMute');
+        let lastVolume = 1;
+
         // Cargar metadatos
         audio.addEventListener('loadedmetadata', () => {
             durationTimeEl.textContent = formatTime(audio.duration);
+            audio.volume = 1; // Asegurar volumen máximo al cargar
         });
 
         // Alternar Play/Pause
@@ -412,13 +426,45 @@
                 audio.pause();
                 btnPlayPause.innerHTML = '▶';
             } else {
-                audio.play();
+                // Forzar volumen por si el navegador lo bloqueó
+                audio.volume = volumeSlider.value;
+                audio.play().catch(e => {
+                    console.error("Error al reproducir audio:", e);
+                    alert("Tu navegador bloqueó el audio automático. Por favor, verifica los permisos de sonido.");
+                });
                 btnPlayPause.innerHTML = '⏸';
             }
             isPlaying = !isPlaying;
         }
 
         btnPlayPause.addEventListener('click', togglePlay);
+
+        // Control de Volumen
+        volumeSlider.addEventListener('input', (e) => {
+            const vol = e.target.value;
+            audio.volume = vol;
+            if (vol == 0) {
+                btnMute.textContent = '🔇';
+            } else if (vol < 0.5) {
+                btnMute.textContent = '🔉';
+            } else {
+                btnMute.textContent = '🔊';
+            }
+        });
+
+        // Botón Mute
+        btnMute.addEventListener('click', () => {
+            if (audio.volume > 0) {
+                lastVolume = audio.volume;
+                audio.volume = 0;
+                volumeSlider.value = 0;
+                btnMute.textContent = '🔇';
+            } else {
+                audio.volume = lastVolume || 1;
+                volumeSlider.value = audio.volume;
+                btnMute.textContent = audio.volume < 0.5 ? '🔉' : '🔊';
+            }
+        });
 
         // Actualizar barra de progreso
         audio.addEventListener('timeupdate', () => {
