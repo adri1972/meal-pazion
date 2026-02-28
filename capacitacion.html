@@ -372,25 +372,27 @@
     <script type="module">
         import { initUI } from './js/app.js?v=999';
 
-        // Inicializar barra lateral y superior
-        initUI();
+        // Inicializar barra lateral y superior de forma segura
+        document.addEventListener('DOMContentLoaded', () => {
+            initUI();
+        });
 
         // El control de audio ahora es manejado íntegramente por el Iframe embebido de Spotify
         // Las notas interactivas mantienen su funcionalidad visual a manera de ejemplo
 
         // Clic en los timestamps de las notas
         document.querySelectorAll('.timestamp').forEach(badge => {
-                badge.addEventListener('click', () => {
-                    // Animación visual de feedback en la nota
-                    const noteContent = badge.nextElementSibling;
-                    noteContent.style.transition = 'background 0.3s';
-                    noteContent.style.background = 'rgba(123, 53, 196, 0.1)';
-                    noteContent.style.padding = '8px';
-                    noteContent.style.borderRadius = '8px';
-                    setTimeout(() => {
-                        noteContent.style.background = 'transparent';
-                    }, 1500);
-                });
+            badge.addEventListener('click', () => {
+                // Animación visual de feedback en la nota
+                const noteContent = badge.nextElementSibling;
+                noteContent.style.transition = 'background 0.3s';
+                noteContent.style.background = 'rgba(123, 53, 196, 0.1)';
+                noteContent.style.padding = '8px';
+                noteContent.style.borderRadius = '8px';
+                setTimeout(() => {
+                    noteContent.style.background = 'transparent';
+                }, 1500);
+            });
         });
     </script>
 </body>
