@@ -1484,12 +1484,24 @@ tbody td:first-child {
   }
 
   .sidebar {
-    transform: translateX(-260px);
-    width: 260px;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+    width: 280px !important;
+    background-color: #FFFFFF !important;
+    transform: translateX(-280px);
+    z-index: 9999 !important;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.3) !important;
+    transition: transform 0.3s ease-in-out !important;
+    display: flex !important;
+    flex-direction: column !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .sidebar.open {
-    transform: translateX(0);
+    transform: translateX(0) !important;
   }
 
   .main-content {
@@ -1570,15 +1582,17 @@ tbody td:first-child {
     /* Previene que las columnas colapsen */
   }
 
-  /* Sidebar Backdrop - Even darker to make sidebar POP */
+  /* Sidebar Backdrop - Solider and correctly layered */
   .sidebar-backdrop {
     display: none;
     position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.75);
-    z-index: 4000;
-    backdrop-filter: blur(2px);
-    animation: fadeIn 0.2s ease;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 9998 !important;
+    backdrop-filter: blur(4px);
   }
 
   .sidebar.open+.sidebar-backdrop {
