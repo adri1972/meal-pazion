@@ -16,6 +16,7 @@
   --purple-400: #CDA0FF;
   --purple-100: #F0E4FF;
   --purple-50: #F9F4FF;
+  --white: #FFFFFF;
 
   --green-900: #064E3B;
   --green-800: #065F46;
@@ -206,7 +207,7 @@ ol {
 /* ─── SIDEBAR ───────────────────────────────────────────── */
 .sidebar {
   width: var(--sidebar-width);
-  background: #FFFFFF !important;
+  background-color: var(--white) !important;
   border-right: 1px solid #E5E7EB;
   position: fixed;
   top: 0;
@@ -214,13 +215,10 @@ ol {
   bottom: 0;
   display: flex;
   flex-direction: column;
-  z-index: 2000;
-  /* Super high priority */
-  box-shadow: 15px 0 50px rgba(0, 0, 0, 0.2);
+  z-index: 5000;
+  box-shadow: 20px 0 60px rgba(0, 0, 0, 0.25);
   overflow-y: auto;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  opacity: 1 !important;
-  filter: none !important;
 }
 
 .sidebar-brand {
@@ -1499,19 +1497,54 @@ tbody td:first-child {
   }
 
   .page-wrapper {
+    padding: var(--space-md) var(--space-sm);
+  }
+
+  h1 {
+    font-size: 24px !important;
+  }
+
+  h2 {
+    font-size: 20px !important;
+  }
+
+  .dashboard-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: var(--space-md);
+    text-align: center;
+  }
+
+  .dashboard-header .flex.gap-sm {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .dashboard-header .btn {
+    flex: 1;
+  }
+
+  .stat-card {
     padding: var(--space-md);
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 2.2rem !important;
   }
 
   .grid-2,
   .grid-3,
   .grid-4 {
     grid-template-columns: 1fr;
+    gap: var(--space-md);
   }
 
   .topbar {
-    padding: 0 var(--space-md);
+    padding: 0 var(--space-sm);
     justify-content: space-between;
     gap: var(--space-xs);
+    height: 60px;
   }
 
   .topbar-title {
@@ -1537,14 +1570,14 @@ tbody td:first-child {
     /* Previene que las columnas colapsen */
   }
 
-  /* Sidebar Backdrop - Solider and without blur for better performance/sharpness */
+  /* Sidebar Backdrop - Even darker to make sidebar POP */
   .sidebar-backdrop {
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.65);
-    z-index: 900;
-    backdrop-filter: none;
+    background-color: rgba(0, 0, 0, 0.75);
+    z-index: 4000;
+    backdrop-filter: blur(2px);
     animation: fadeIn 0.2s ease;
   }
 
