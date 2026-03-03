@@ -4,7 +4,7 @@
  * Permite el funcionamiento offline cacheando los assets esenciales.
  */
 
-const CACHE_NAME = 'pazion-meal-v18-sidebar-final-fix';
+const CACHE_NAME = 'pazion-meal-v19-assets-fix';
 const ASSETS = [
     './',
     './index.html',
@@ -20,7 +20,9 @@ const ASSETS = [
     './js/auth.js',
     './js/db.js',
     './js/firma.js',
+    './js/chart.min.js',
     './manifest.json',
+    './assets/img/logo.png',
     './assets/docs/Guia_Rapida_Captura_PaZion.html'
 ];
 
