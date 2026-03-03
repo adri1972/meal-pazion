@@ -22,7 +22,7 @@ export function initUI() {
  * Función nuclear para limpiar cachés rebeldes y service workers antiguos.
  */
 async function forceSystemUpdate() {
-  const CURRENT_VER = 'v19-assets-fix';
+  const CURRENT_VER = 'v20-always-works';
   if (localStorage.getItem('pazion_system_version') === CURRENT_VER) return;
 
   console.warn('Detectada versión antigua. Iniciando limpieza profunda de caché...');
@@ -30,7 +30,6 @@ async function forceSystemUpdate() {
   if ('serviceWorker' in navigator) {
     const registrations = await navigator.serviceWorker.getRegistrations();
     for (let registration of registrations) {
-      // Unregister everything to start clean
       await registration.unregister();
     }
   }
@@ -40,7 +39,7 @@ async function forceSystemUpdate() {
     await Promise.all(keys.map(key => caches.delete(key)));
   }
 
-  localStorage.setItem('pazion_system_version', 'v19-assets-fix');
+  localStorage.setItem('pazion_system_version', 'v20-always-works');
   console.log('Limpieza completada. Recargando sistema...');
   window.location.reload();
 }

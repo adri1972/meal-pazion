@@ -4,7 +4,7 @@
  * Permite el funcionamiento offline cacheando los assets esenciales.
  */
 
-const CACHE_NAME = 'pazion-meal-v19-assets-fix';
+const CACHE_NAME = 'pazion-meal-v20-always-works';
 const ASSETS = [
     './',
     './index.html',
@@ -28,36 +28,35 @@ const ASSETS = [
 
 // Instalación: Cachear assets y forzar activación inmediata
 self.addEventListener('install', (event) => {
-    self.skipWaiting(); // ¡OBLIGA AL NUEVO SW A INSTALARSE INMEDIATAMENTE!
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            console.log('Cacheando assets institucionales...');
+            console.log('Instalando caché v20...');
             return cache.addAll(ASSETS);
         })
     );
 });
 
-// Activación: Limpiar caches antiguos y tomar control total
+// Activación: Limpiar caches antiguos e interceptar inmediatamente
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keys) => {
             return Promise.all(
                 keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
             );
-        }).then(() => self.clients.claim()) // ¡TOMA EL CONTROL INMEDIATO DE LAS PESTAÑAS ABIERTAS!
+        }).then(() => self.clients.claim())
     );
 });
 
-// Estrategia: Network First, actualizando el caché silenciosamente
+// Estrategia: Network First con fallback a Cache Robusto
 self.addEventListener('fetch', (event) => {
-    // Si la petición no es HTTP/HTTPS (por ejemplo chrome-extension://), dejarla pasar
     if (!event.request.url.startsWith('http')) return;
 
     event.respondWith(
         fetch(event.request)
             .then((response) => {
-                // Si hay red y la respuesta es válida, actualizamos el caché
-                if (response && response.status === 200 && response.type === 'basic') {
+                // Si hay red, actualizamos el caché para futuras consultas offline
+                if (response && response.status === 200) {
                     const responseClone = response.clone();
                     caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, responseClone);
@@ -66,8 +65,17 @@ self.addEventListener('fetch', (event) => {
                 return response;
             })
             .catch(() => {
-                // Si no hay red, intentamos recuperar del caché
-                return caches.match(event.request);
+                // SI NO HAY RED:
+                // Buscamos en el caché ignorando los parámetros de búsqueda (?v=19, etc.)
+                // Esto garantiza que 'app.js?v=19' cargue aunque solo tengamos 'app.js'
+                return caches.match(event.request, { ignoreSearch: true }).then((cachedResponse) => {
+                    if (cachedResponse) return cachedResponse;
+
+                    // Si es una navegación a una página HTML y no está en caché, devolver index.html como fallback
+                    if (event.request.mode === 'navigate') {
+                        return caches.match('./index.html');
+                    }
+                });
             })
     );
 });
