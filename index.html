@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Sistema MEAL +PaZion</title>
-    <link rel="stylesheet" href="css/main.css?v=22">
-    <link rel="manifest" href="manifest.json?v=22">
+    <link rel="stylesheet" href="css/main.css?v=23">
+    <link rel="manifest" href="manifest.json?v=23">
     <meta name="theme-color" content="#7B35C4">
 </head>
 
@@ -64,8 +64,8 @@
     </div>
 
     <script type="module">
-        import { login, checkAuth } from './js/auth.js?v=22';
-        import { initUI } from './js/app.js?v=22';
+        import { login, checkAuth } from './js/auth.js?v=23';
+        import { initUI } from './js/app.js?v=23';
 
         // Inicializar actualizaciones y offline
         initUI();
@@ -76,7 +76,7 @@
         // Register Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw-v11.js?v=22')
+                navigator.serviceWorker.register('./sw-v11.js?v=23')
                     .then(reg => console.log('SW registrado', reg))
                     .catch(err => console.log('SW error', err));
             });
@@ -100,14 +100,33 @@
             }
         });
 
-        // Lógica de Rescate / Reset
+        // Lógica de Rescate / Reset Nuclear
         document.getElementById('btnRescue')?.addEventListener('click', async (e) => {
             e.preventDefault();
-            const msg = '¿Deseas restablecer el acceso?\n\nEsto limpiará la caché local y reiniciará la base de datos. Usa esta opción si no puedes iniciar sesión o el sistema se siente lento.\n\nCredenciales por defecto:\nAdmin: admin@pazion.org / 123\nTécnico: tecnico@pazion.org / 123';
+            const msg = '¿Deseas aplicar una LIMPIEZA NUCLEAR?\n\nEsto borrará:\n1. Base de datos (incluyendo UnknownError)\n2. Sesiones activas\n3. Caché del navegador\n4. Service Workers\n\nUse esto solo si el sistema no le permite entrar tras varios intentos.';
             if (confirm(msg)) {
-                const { resetDatabase } = await import('./js/db.js?v=22');
+                // 1. Borrar Base de Datos
+                const { resetDatabase } = await import('./js/db.js?v=23');
                 await resetDatabase();
-                location.reload();
+                
+                // 2. Limpiar LocalStorage y Sessión
+                localStorage.clear();
+                sessionStorage.clear();
+
+                // 3. Borrar Caches
+                if ('caches' in window) {
+                    const keys = await caches.keys();
+                    await Promise.all(keys.map(key => caches.delete(key)));
+                }
+
+                // 4. Desregistrar Service Workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(registrations.map(r => r.unregister()));
+                }
+
+                alert('Sistema purgado. El sistema se recargará ahora.');
+                location.href = 'index.html?resetted=' + Date.now();
             }
         });
     </script>
