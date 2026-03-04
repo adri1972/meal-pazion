@@ -3,31 +3,37 @@
  * @description Gestión de autenticación y roles para el Sistema MEAL +PaZion.
  */
 
-import { initDB, getAllData } from './db.js';
+import { initDB, getAllData, ensureDataSeeded } from './db.js';
 
 /**
  * Intenta iniciar sesión con un correo y contraseña.
  */
 export async function login(correo, password) {
-    await initDB();
-    const usuarios = await getAllData('usuarios');
+    try {
+        await initDB();
+        await ensureDataSeeded(); // Garantiza que los usuarios maestros existan
 
-    const usuario = usuarios.find(u => u.correo === correo && u.password === password);
+        const usuarios = await getAllData('usuarios');
+        const usuario = usuarios.find(u => u.correo === correo && u.password === password);
 
-    if (usuario) {
-        // Solo guardamos info no sensible en la sesión
-        const sessionData = {
-            id: usuario.id,
-            nombre: usuario.nombre,
-            rol: usuario.rol,
-            correo: usuario.correo,
-            loggedInAt: new Date().getTime()
-        };
-        localStorage.setItem('pazion_session', JSON.stringify(sessionData));
-        return { success: true, user: sessionData };
+        if (usuario) {
+            // Solo guardamos info no sensible en la sesión
+            const sessionData = {
+                id: usuario.id,
+                nombre: usuario.nombre,
+                rol: usuario.rol,
+                correo: usuario.correo,
+                loggedInAt: new Date().getTime()
+            };
+            localStorage.setItem('pazion_session', JSON.stringify(sessionData));
+            return { success: true, user: sessionData };
+        }
+
+        return { success: false, message: 'Correo o contraseña incorrectos' };
+    } catch (error) {
+        console.error('Error en el proceso de login:', error);
+        return { success: false, message: 'Error técnico al acceder a la base de datos' };
     }
-
-    return { success: false, message: 'Correo o contraseña incorrectos' };
 }
 
 /**

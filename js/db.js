@@ -150,41 +150,52 @@ export function seedAllData(transaction) {
 }
 
 /**
- * Verifica si la BD tiene los indicadores correctos. Si no, los re-siembra.
- * Se llama siempre al iniciar la página de captura para garantizar datos frescos.
+ * Verifica si la BD tiene los indicadores y usuarios correctos. Si no, los re-siembra.
+ * Se llama siempre al iniciar la página de captura o dashboard para garantizar datos frescos.
  */
 export async function ensureDataSeeded() {
     if (!db) {
-        console.warn('ensureDataSeeded: BD no inicializada.');
-        return;
+        console.warn('ensureDataSeeded: BD no inicializada. Intentando inicializar...');
+        await initDB();
     }
 
-    const indicadores = await getAllData('indicadores');
-    const capturas = await getAllData('capturas');
+    try {
+        const indicadores = await getAllData('indicadores');
+        const usuarios = await getAllData('usuarios');
+        const capturas = await getAllData('capturas');
 
-    console.log(`ensureDataSeeded: ${indicadores.length} indicadores, ${capturas.length} capturas.`);
+        console.log(`ensureDataSeeded: ${indicadores.length} indicadores, ${usuarios.length} usuarios, ${capturas.length} capturas.`);
 
-    if (indicadores.length >= INDICADORES_MAESTROS.length && capturas.length > 0) {
-        console.log('Datos de indicadores y capturas OK.');
-        return;
+        // Si tenemos al menos los indicadores maestros y los usuarios maestros, no re-sembramos
+        if (indicadores.length >= INDICADORES_MAESTROS.length && usuarios.length >= USUARIOS_MAESTROS.length) {
+            console.log('Estructura de datos básica OK.');
+            return;
+        }
+
+        console.warn(`Re-sembrando datos (Faltan indicadores o usuarios)...`);
+
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(['usuarios', 'proyectos', 'indicadores', 'capturas'], 'readwrite');
+
+            transaction.oncomplete = () => {
+                console.log('Re-siembra completada exitosamente.');
+                resolve();
+            };
+            transaction.onerror = (e) => {
+                console.error('Error en re-siembra:', e.target.error);
+                reject(e.target.error);
+            };
+
+            seedAllData(transaction);
+        });
+    } catch (error) {
+        console.error('Error en ensureDataSeeded:', error);
+        // Fallback: tratar de reinicializar todo si falla la lectura
+        if (confirm('Se detectó un problema con la base de datos local. ¿Deseas restablecer el sistema?')) {
+            await resetDatabase();
+            location.reload();
+        }
     }
-
-    console.warn(`Re-sembrando datos (Faltan indicadores o capturas)...`);
-
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction(['usuarios', 'proyectos', 'indicadores', 'capturas'], 'readwrite');
-
-        transaction.oncomplete = () => {
-            console.log('Re-siembra completada exitosamente.');
-            resolve();
-        };
-        transaction.onerror = (e) => {
-            console.error('Error en re-siembra:', e.target.error);
-            reject(e.target.error);
-        };
-
-        seedAllData(transaction);
-    });
 }
 
 /**

@@ -51,12 +51,24 @@
 
                 <p class="text-sm text-muted">Asegúrese de estar conectado a internet durante el primer inicio de sesión
                     para sincronizar roles.</p>
+
+                <p class="text-xs text-muted"
+                    style="margin-top: var(--space-md); padding-top: var(--space-md); border-top: 1px solid var(--border);">
+                    ¿Problemas para entrar?
+                    <a href="#" id="btnRescue"
+                        style="color: var(--purple-400); font-weight: 700; text-decoration: none;">Restablecer
+                        Sistema</a>
+                </p>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { login, checkAuth } from './js/auth.js?v=20';
+        import { initUI } from './js/app.js?v=20';
+
+        // Inicializar actualizaciones y offline
+        initUI();
 
         // Redirigir si ya está logueado
         checkAuth();
@@ -83,7 +95,19 @@
             if (result.success) {
                 window.location.href = 'dashboard.html';
             } else {
+                loginError.textContent = result.message || 'Correo o contraseña incorrectos';
                 loginError.classList.remove('hidden');
+            }
+        });
+
+        // Lógica de Rescate / Reset
+        document.getElementById('btnRescue')?.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const msg = '¿Deseas restablecer el acceso?\n\nEsto limpiará la caché local y reiniciará la base de datos. Usa esta opción si no puedes iniciar sesión o el sistema se siente lento.\n\nCredenciales por defecto:\nAdmin: admin@pazion.org / 123\nTécnico: tecnico@pazion.org / 123';
+            if (confirm(msg)) {
+                const { resetDatabase } = await import('./js/db.js?v=20');
+                await resetDatabase();
+                location.reload();
             }
         });
     </script>

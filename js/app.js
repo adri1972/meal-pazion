@@ -8,14 +8,16 @@ import { getCurrentUser, logout } from './auth.js';
 /**
  * Inicializa los componentes comunes de la interfaz.
  */
-export function initUI() {
+export async function initUI() {
+  // Siempre intentar actualizar y detectar offline, incluso sin sesión
+  await forceSystemUpdate();
+  initOfflineDetection();
+
   const user = getCurrentUser();
   if (!user) return;
 
   renderSidebar(user);
   renderTopbar(user);
-  initOfflineDetection();
-  forceSystemUpdate();
 }
 
 /**
