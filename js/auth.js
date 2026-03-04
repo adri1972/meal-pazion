@@ -32,7 +32,7 @@ export async function login(correo, password) {
         return { success: false, message: 'Correo o contraseña incorrectos' };
     } catch (error) {
         console.error('Error en el proceso de login:', error);
-        return { success: false, message: 'Error técnico al acceder a la base de datos' };
+        return { success: false, message: `Error técnico de acceso: ${error.name || 'Desconocido'}. Intente limpiar caché.` };
     }
 }
 

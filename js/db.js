@@ -5,9 +5,9 @@
  */
 
 const DB_NAME = 'PazionMEAL';
-const DB_VERSION = 8; // v8: Refactorización de sembrado para mayor robustez
+const DB_VERSION = 10; // v10: Bump para asegurar migración limpia post-errores
 
-let db;
+let db = null;
 
 // Lista maestra de indicadores — fuente de verdad única
 const INDICADORES_MAESTROS = [
@@ -43,51 +43,58 @@ const PROYECTO_MAESTRO = {
  * Inicializa la base de datos y crea los almacenes de objetos (stores).
  */
 export async function initDB() {
+    if (db) return db;
+
     return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        try {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-        request.onerror = (event) => {
-            console.error('Error al abrir la base de datos:', event.target.error);
-            reject('Error al abrir IndexedDB');
-        };
+            request.onerror = (event) => {
+                console.error('Error al abrir la base de datos:', event.target.error);
+                reject(event.target.error || 'Error al abrir IndexedDB');
+            };
 
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            console.log(`Base de datos v${DB_VERSION} inicializada correctamente.`);
-            resolve(db);
-        };
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                console.log(`Base de datos v${DB_VERSION} inicializada correctamente.`);
+                resolve(db);
+            };
 
-        request.onupgradeneeded = (event) => {
-            const dbInstance = event.target.result;
-            const tx = event.target.transaction;
-            console.log(`Migración de BD: v${event.oldVersion} → v${event.newVersion}`);
+            request.onupgradeneeded = (event) => {
+                const dbInstance = event.target.result;
+                const tx = event.target.transaction;
+                console.log(`Migración de BD: v${event.oldVersion} → v${event.newVersion}`);
 
-            // --- Eliminar stores antiguas para empezar limpio ---
-            const storesToDelete = ['usuarios', 'proyectos', 'indicadores', 'capturas'];
-            storesToDelete.forEach(storeName => {
-                if (dbInstance.objectStoreNames.contains(storeName)) {
-                    dbInstance.deleteObjectStore(storeName);
-                }
-            });
+                // --- Eliminar stores antiguas para empezar limpio ---
+                const storesToDelete = ['usuarios', 'proyectos', 'indicadores', 'capturas'];
+                storesToDelete.forEach(storeName => {
+                    if (dbInstance.objectStoreNames.contains(storeName)) {
+                        dbInstance.deleteObjectStore(storeName);
+                    }
+                });
 
-            // --- Crear stores nuevas ---
-            const userStore = dbInstance.createObjectStore('usuarios', { keyPath: 'id', autoIncrement: true });
-            userStore.createIndex('correo', 'correo', { unique: true });
+                // --- Crear stores nuevas ---
+                const userStore = dbInstance.createObjectStore('usuarios', { keyPath: 'id', autoIncrement: true });
+                userStore.createIndex('correo', 'correo', { unique: true });
 
-            dbInstance.createObjectStore('proyectos', { keyPath: 'id', autoIncrement: true });
+                dbInstance.createObjectStore('proyectos', { keyPath: 'id', autoIncrement: true });
 
-            const indicatorStore = dbInstance.createObjectStore('indicadores', { keyPath: 'id', autoIncrement: true });
-            indicatorStore.createIndex('proyecto_id', 'proyecto_id', { unique: false });
-            indicatorStore.createIndex('eje', 'eje', { unique: false });
+                const indicatorStore = dbInstance.createObjectStore('indicadores', { keyPath: 'id', autoIncrement: true });
+                indicatorStore.createIndex('proyecto_id', 'proyecto_id', { unique: false });
+                indicatorStore.createIndex('eje', 'eje', { unique: false });
 
-            const captureStore = dbInstance.createObjectStore('capturas', { keyPath: 'id', autoIncrement: true });
-            captureStore.createIndex('indicador_id', 'indicador_id', { unique: false });
-            captureStore.createIndex('estado', 'estado', { unique: false });
-            captureStore.createIndex('sync_status', 'sync_status', { unique: false });
+                const captureStore = dbInstance.createObjectStore('capturas', { keyPath: 'id', autoIncrement: true });
+                captureStore.createIndex('indicador_id', 'indicador_id', { unique: false });
+                captureStore.createIndex('estado', 'estado', { unique: false });
+                captureStore.createIndex('sync_status', 'sync_status', { unique: false });
 
-            // --- Sembrar datos iniciales en la misma transacción de migración ---
-            seedAllData(tx);
-        };
+                // --- Sembrar datos iniciales en la misma transacción de migración ---
+                seedAllData(tx);
+            };
+        } catch (e) {
+            console.error('Error crítico en initDB setup:', e);
+            reject(e);
+        }
     });
 }
 
