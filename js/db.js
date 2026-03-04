@@ -4,8 +4,8 @@
  * Permite el funcionamiento offline-first.
  */
 
-const DB_NAME = 'PazionMEAL';
-const DB_VERSION = 10; // v10: Bump para asegurar migración limpia post-errores
+const DB_NAME = 'PazionMEAL_V_FINAL'; // Cambiamos nombre para evadir corrupción previa
+const DB_VERSION = 1;
 
 let db = null;
 
@@ -42,21 +42,44 @@ const PROYECTO_MAESTRO = {
 /**
  * Inicializa la base de datos y crea los almacenes de objetos (stores).
  */
-export async function initDB() {
+export async function initDB(retries = 3) {
     if (db) return db;
 
     return new Promise((resolve, reject) => {
         try {
+            console.log(`Intentando abrir BD: ${DB_NAME} (Intento: ${4 - retries})`);
             const request = indexedDB.open(DB_NAME, DB_VERSION);
 
+            request.onblocked = () => {
+                console.warn('La base de datos está bloqueada por otra pestaña.');
+                alert('Hay otra pestaña abierta de la aplicación. Por favor, ciérrela para actualizar el sistema.');
+            };
+
             request.onerror = (event) => {
-                console.error('Error al abrir la base de datos:', event.target.error);
-                reject(event.target.error || 'Error al abrir IndexedDB');
+                const error = event.target.error;
+                console.error('Error al abrir la base de datos:', error);
+
+                if (error.name === 'UnknownError' && retries > 0) {
+                    console.warn(`UnknownError detectado. Reintentando en 500ms... (${retries} retantes)`);
+                    setTimeout(() => {
+                        initDB(retries - 1).then(resolve).catch(reject);
+                    }, 500);
+                    return;
+                }
+                reject(error || 'Error al abrir IndexedDB');
             };
 
             request.onsuccess = (event) => {
                 db = event.target.result;
-                console.log(`Base de datos v${DB_VERSION} inicializada correctamente.`);
+
+                // Manejar cambios de versión desde otras pestañas
+                db.onversionchange = () => {
+                    db.close();
+                    db = null;
+                    console.log('Base de datos cerrada por cambio de versión externo.');
+                };
+
+                console.log(`Base de datos ${DB_NAME} inicializada correctamente.`);
                 resolve(db);
             };
 

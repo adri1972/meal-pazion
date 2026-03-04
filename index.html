@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Sistema MEAL +PaZion</title>
-    <link rel="stylesheet" href="css/main.css?v=21">
-    <link rel="manifest" href="manifest.json?v=21">
+    <link rel="stylesheet" href="css/main.css?v=22">
+    <link rel="manifest" href="manifest.json?v=22">
     <meta name="theme-color" content="#7B35C4">
 </head>
 
@@ -64,8 +64,8 @@
     </div>
 
     <script type="module">
-        import { login, checkAuth } from './js/auth.js?v=21';
-        import { initUI } from './js/app.js?v=21';
+        import { login, checkAuth } from './js/auth.js?v=22';
+        import { initUI } from './js/app.js?v=22';
 
         // Inicializar actualizaciones y offline
         initUI();
@@ -76,7 +76,7 @@
         // Register Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw-v11.js?v=21')
+                navigator.serviceWorker.register('./sw-v11.js?v=22')
                     .then(reg => console.log('SW registrado', reg))
                     .catch(err => console.log('SW error', err));
             });
@@ -105,7 +105,7 @@
             e.preventDefault();
             const msg = '¿Deseas restablecer el acceso?\n\nEsto limpiará la caché local y reiniciará la base de datos. Usa esta opción si no puedes iniciar sesión o el sistema se siente lento.\n\nCredenciales por defecto:\nAdmin: admin@pazion.org / 123\nTécnico: tecnico@pazion.org / 123';
             if (confirm(msg)) {
-                const { resetDatabase } = await import('./js/db.js?v=21');
+                const { resetDatabase } = await import('./js/db.js?v=22');
                 await resetDatabase();
                 location.reload();
             }
